@@ -18,6 +18,14 @@ var (
 	ignoreRobots    bool
 	enableRedis     bool
 	redisURL        string
+
+	// Advanced features
+	enableProxies     bool
+	enableTLS         bool
+	enableJSRendering bool
+	enableSQLite      bool
+	useHeaderRotation bool
+	maxRetries        int
 )
 
 var crawlCmd = &cobra.Command{
@@ -34,6 +42,14 @@ var crawlCmd = &cobra.Command{
 			IgnoreRobots:    ignoreRobots,
 			EnableRedis:     enableRedis,
 			RedisURL:        redisURL,
+
+			// Advanced features
+			EnableProxies:     enableProxies,
+			EnableTLS:         enableTLS,
+			EnableJSRendering: enableJSRendering,
+			EnableSQLite:      enableSQLite,
+			UseHeaderRotation: useHeaderRotation,
+			MaxRetries:        maxRetries,
 		}
 
 		c, err := crawler.New(config)
@@ -63,6 +79,14 @@ func init() {
 	crawlCmd.Flags().BoolVar(&ignoreRobots, "ignore-robots", false, "Ignore robots.txt")
 	crawlCmd.Flags().BoolVar(&enableRedis, "enable-redis", false, "Enable distributed crawling with Redis")
 	crawlCmd.Flags().StringVar(&redisURL, "redis-url", "", "Redis connection URL")
+
+	// Advanced features
+	crawlCmd.Flags().BoolVar(&enableProxies, "enable-proxies", false, "Enable proxy rotation (uses free proxy lists)")
+	crawlCmd.Flags().BoolVar(&enableTLS, "enable-tls-fingerprint", false, "Enable TLS fingerprinting to mimic real browsers")
+	crawlCmd.Flags().BoolVar(&enableJSRendering, "enable-js-rendering", false, "Enable JavaScript rendering with headless Chrome")
+	crawlCmd.Flags().BoolVar(&enableSQLite, "enable-sqlite", false, "Use SQLite for queryable storage instead of JSONL")
+	crawlCmd.Flags().BoolVar(&useHeaderRotation, "use-header-rotation", true, "Rotate browser headers")
+	crawlCmd.Flags().IntVar(&maxRetries, "max-retries", 3, "Maximum retry attempts per URL")
 
 	crawlCmd.MarkFlagRequired("start-url")
 }

@@ -14,6 +14,14 @@ type Config struct {
 	IgnoreRobots    bool
 	EnableRedis     bool
 	RedisURL        string
+
+	// Advanced features
+	EnableProxies     bool
+	EnableTLS         bool
+	EnableJSRendering bool
+	EnableSQLite      bool
+	UseHeaderRotation bool
+	MaxRetries        int
 }
 
 // Results contains crawl statistics
