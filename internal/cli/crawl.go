@@ -68,17 +68,18 @@ var crawlCmd = &cobra.Command{
 			ProxyLeaseDuration:  time.Duration(proxyLeaseDuration) * time.Minute,
 		}
 
-		c, err := crawler.New(config)
+		c, err := crawler.NewFromConfig(config)
 		if err != nil {
 			return fmt.Errorf("failed to create crawler: %w", err)
 		}
+		defer c.Close()
 
 		results, err := c.Crawl()
 		if err != nil {
 			return fmt.Errorf("crawl failed: %w", err)
 		}
 
-		fmt.Printf("Crawl completed!\n")
+		fmt.Printf("\nCrawl completed!\n")
 		fmt.Printf("Discovered: %d, Processed: %d, Errors: %d\n",
 			results.Discovered, results.Processed, results.Errors)
 

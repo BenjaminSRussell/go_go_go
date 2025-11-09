@@ -3,7 +3,11 @@ module github.com/BenjaminSRussell/go_go_go
 go 1.24.7
 
 require (
+	github.com/PuerkitoBio/goquery v1.10.3
 	github.com/bits-and-blooms/bloom/v3 v3.7.1
+	github.com/chromedp/chromedp v0.14.2
+	github.com/mattn/go-sqlite3 v1.14.32
+	github.com/refraction-networking/utls v1.8.1
 	github.com/spf13/cobra v1.10.1
 	github.com/temoto/robotstxt v1.1.2
 	golang.org/x/net v0.46.0
