@@ -26,6 +26,14 @@ var (
 	enableSQLite      bool
 	useHeaderRotation bool
 	maxRetries        int
+
+	// Persona & behavioral features
+	enablePersonas      bool
+	maxPersonas         int
+	personaLifetime     int
+	personaReuseLimit   int
+	enableWeightedNav   bool
+	proxyLeaseDuration  int
 )
 
 var crawlCmd = &cobra.Command{
@@ -50,6 +58,14 @@ var crawlCmd = &cobra.Command{
 			EnableSQLite:      enableSQLite,
 			UseHeaderRotation: useHeaderRotation,
 			MaxRetries:        maxRetries,
+
+			// Persona & behavioral features
+			EnablePersonas:      enablePersonas,
+			MaxPersonas:         maxPersonas,
+			PersonaLifetime:     time.Duration(personaLifetime) * time.Minute,
+			PersonaReuseLimit:   personaReuseLimit,
+			EnableWeightedNav:   enableWeightedNav,
+			ProxyLeaseDuration:  time.Duration(proxyLeaseDuration) * time.Minute,
 		}
 
 		c, err := crawler.New(config)
@@ -87,6 +103,14 @@ func init() {
 	crawlCmd.Flags().BoolVar(&enableSQLite, "enable-sqlite", false, "Use SQLite for queryable storage instead of JSONL")
 	crawlCmd.Flags().BoolVar(&useHeaderRotation, "use-header-rotation", true, "Rotate browser headers")
 	crawlCmd.Flags().IntVar(&maxRetries, "max-retries", 3, "Maximum retry attempts per URL")
+
+	// Persona & behavioral features
+	crawlCmd.Flags().BoolVar(&enablePersonas, "enable-personas", false, "Enable persona-based crawling with session persistence")
+	crawlCmd.Flags().IntVar(&maxPersonas, "max-personas", 50, "Maximum number of concurrent personas")
+	crawlCmd.Flags().IntVar(&personaLifetime, "persona-lifetime", 30, "Persona lifetime in minutes")
+	crawlCmd.Flags().IntVar(&personaReuseLimit, "persona-reuse-limit", 100, "Maximum requests per persona")
+	crawlCmd.Flags().BoolVar(&enableWeightedNav, "enable-weighted-nav", false, "Use weighted navigation (prefer visible/important links)")
+	crawlCmd.Flags().IntVar(&proxyLeaseDuration, "proxy-lease-duration", 15, "Proxy lease duration in minutes (session affinity)")
 
 	crawlCmd.MarkFlagRequired("start-url")
 }

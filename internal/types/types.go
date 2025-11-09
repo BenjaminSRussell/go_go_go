@@ -22,6 +22,14 @@ type Config struct {
 	EnableSQLite      bool
 	UseHeaderRotation bool
 	MaxRetries        int
+
+	// Persona & behavioral features
+	EnablePersonas       bool
+	MaxPersonas          int
+	PersonaLifetime      time.Duration
+	PersonaReuseLimit    int
+	EnableWeightedNav    bool
+	ProxyLeaseDuration   time.Duration
 }
 
 // Results contains crawl statistics
