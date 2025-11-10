@@ -394,3 +394,15 @@ func (c *Crawler) reportProgress(ticker *time.Ticker) {
 			discovered, processed, errors, pending)
 	}
 }
+
+// Close closes the crawler and releases resources
+func (c *Crawler) Close() error {
+	c.shutdown.Store(true)
+	if c.cancel != nil {
+		c.cancel()
+	}
+	if c.storage != nil {
+		return c.storage.Close()
+	}
+	return nil
+}

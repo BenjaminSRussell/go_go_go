@@ -113,7 +113,7 @@ func (ec *EnhancedCrawler) printFeatureStatus() {
 	if ec.retryHandler != nil {
 		fmt.Println("✓ Intelligent retry")
 	}
-	fmt.Println("========================\n")
+	fmt.Println("========================")
 }
 
 // reportProgressEnhanced prints detailed progress with enhanced stats

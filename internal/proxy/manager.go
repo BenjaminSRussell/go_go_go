@@ -29,9 +29,9 @@ type ProxyManager struct {
 	sources []string
 
 	// Configuration
-	checkInterval    time.Duration
-	maxFailCount     int
-	validationURL    string
+	checkInterval     time.Duration
+	maxFailCount      int
+	validationURL     string
 	validationTimeout time.Duration
 
 	// Channels
@@ -42,14 +42,14 @@ type ProxyManager struct {
 // NewProxyManager creates a new proxy manager
 func NewProxyManager(sources []string) *ProxyManager {
 	pm := &ProxyManager{
-		proxies:          make(map[string]*Proxy),
-		sources:          sources,
-		checkInterval:    10 * time.Minute,
-		maxFailCount:     3,
-		validationURL:    "https://api.ipify.org",
+		proxies:           make(map[string]*Proxy),
+		sources:           sources,
+		checkInterval:     10 * time.Minute,
+		maxFailCount:      3,
+		validationURL:     "https://api.ipify.org",
 		validationTimeout: 10 * time.Second,
-		proxyQueue:       make(chan string, 1000),
-		stopChan:         make(chan struct{}),
+		proxyQueue:        make(chan string, 1000),
+		stopChan:          make(chan struct{}),
 	}
 
 	return pm

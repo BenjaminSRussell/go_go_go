@@ -15,21 +15,21 @@ import (
 
 // Persona represents a consistent browsing identity
 type Persona struct {
-	ID             string
-	Created        time.Time
-	LastUsed       time.Time
-	RequestCount   int
+	ID           string
+	Created      time.Time
+	LastUsed     time.Time
+	RequestCount int
 
 	// Identity components
-	TLSProfile     customhttp.TLSProfile
-	HeaderProfile  customhttp.BrowserProfile
-	CookieJar      http.CookieJar
-	ProxyURL       string
+	TLSProfile    customhttp.TLSProfile
+	HeaderProfile customhttp.BrowserProfile
+	CookieJar     http.CookieJar
+	ProxyURL      string
 
 	// Behavioral traits
-	AvgThinkTime   time.Duration // Average time between actions
-	Patience       time.Duration // How long to wait for pages
-	ClickBias      float64       // Preference for visible links (0-1)
+	AvgThinkTime time.Duration // Average time between actions
+	Patience     time.Duration // How long to wait for pages
+	ClickBias    float64       // Preference for visible links (0-1)
 
 	mu sync.Mutex
 }
@@ -39,13 +39,13 @@ type PersonaPool struct {
 	personas map[string]*Persona
 	mu       sync.RWMutex
 
-	tlsFingerprinter   *customhttp.TLSFingerprinter
-	headerRotator      *customhttp.HeaderRotator
+	tlsFingerprinter *customhttp.TLSFingerprinter
+	headerRotator    *customhttp.HeaderRotator
 
 	// Configuration
-	maxPersonas      int
-	personaLifetime  time.Duration
-	reuseThreshold   int // Max requests per persona
+	maxPersonas     int
+	personaLifetime time.Duration
+	reuseThreshold  int // Max requests per persona
 }
 
 // NewPersonaPool creates a new persona pool
@@ -258,6 +258,36 @@ func (pp *PersonaPool) GetStats() map[string]interface{} {
 		"total_personas":  len(pp.personas),
 		"active_personas": active,
 		"max_personas":    pp.maxPersonas,
+	}
+}
+
+// NewPersona creates a new persona with default values
+func NewPersona() *Persona {
+	id := generateID()
+
+	avgThinkTime := randomLogNormal(3.0, 0.8)
+	patience := randomLogNormal(15.0, 0.5)
+	clickBias := 0.7 + randomFloat()*0.3
+
+	jar, _ := cookiejar.New(&cookiejar.Options{
+		PublicSuffixList: publicsuffix.List,
+	})
+
+	fingerprinter := customhttp.NewTLSFingerprinter()
+	tlsProfile := fingerprinter.GetRandomProfile()
+	headerProfile := fingerprinter.GetMatchingHeaderProfile(tlsProfile)
+
+	return &Persona{
+		ID:            id,
+		Created:       time.Now(),
+		LastUsed:      time.Now(),
+		RequestCount:  0,
+		TLSProfile:    tlsProfile,
+		HeaderProfile: headerProfile,
+		CookieJar:     jar,
+		AvgThinkTime:  avgThinkTime,
+		Patience:      patience,
+		ClickBias:     clickBias,
 	}
 }
 

@@ -6,7 +6,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"strings"
 	"time"
 
 	customhttp "github.com/BenjaminSRussell/go_go_go/internal/http"
@@ -24,13 +23,13 @@ type EnhancedCrawler struct {
 	*Crawler
 
 	// Advanced components
-	personaPool       *persona.PersonaPool
-	proxyManager      *proxy.EnhancedProxyManager
-	navigator         *navigation.WeightedNavigator
-	retryHandler      *customhttp.RetryHandler
-	headerRotator     *customhttp.HeaderRotator
-	chromeRenderer    *renderer.ChromeRenderer
-	sqliteStorage     *storage.SQLiteStorage
+	personaPool    *persona.PersonaPool
+	proxyManager   *proxy.EnhancedProxyManager
+	navigator      *navigation.WeightedNavigator
+	retryHandler   *customhttp.RetryHandler
+	headerRotator  *customhttp.HeaderRotator
+	chromeRenderer *renderer.ChromeRenderer
+	sqliteStorage  *storage.SQLiteStorage
 
 	// Feature flags from config
 	enablePersonas    bool

@@ -8,11 +8,11 @@ import (
 )
 
 var (
-	exportDataDir       string
-	outputFile          string
-	includeLastmod      bool
-	includeChangefreq   bool
-	defaultPriority     float64
+	exportDataDir     string
+	outputFile        string
+	includeLastmod    bool
+	includeChangefreq bool
+	defaultPriority   float64
 )
 
 var exportCmd = &cobra.Command{

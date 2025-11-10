@@ -1,0 +1,22 @@
+{
+  "StartURL": "https://example.com",
+  "Workers": 1,
+  "Timeout": 10000000000,
+  "DataDir": "./test_crawl",
+  "SeedingStrategy": "all",
+  "IgnoreRobots": false,
+  "EnableRedis": false,
+  "RedisURL": "",
+  "EnableProxies": false,
+  "EnableTLS": false,
+  "EnableJSRendering": false,
+  "EnableSQLite": false,
+  "UseHeaderRotation": true,
+  "MaxRetries": 3,
+  "EnablePersonas": false,
+  "MaxPersonas": 50,
+  "PersonaLifetime": 1800000000000,
+  "PersonaReuseLimit": 100,
+  "EnableWeightedNav": false,
+  "ProxyLeaseDuration": 900000000000
+}

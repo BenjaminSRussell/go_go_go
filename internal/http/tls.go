@@ -11,17 +11,16 @@ import (
 
 // TLSProfile represents a browser TLS fingerprint
 type TLSProfile struct {
-	Name      string
-	ClientID  utls.ClientHelloID
+	Name     string
+	ClientID utls.ClientHelloID
 }
 
 var tlsProfiles = []TLSProfile{
 	{Name: "Chrome_120", ClientID: utls.HelloChrome_120},
-	{Name: "Firefox_117", ClientID: utls.HelloFirefox_117},
-	{Name: "Safari_16_0", ClientID: utls.HelloSafari_16_0},
-	{Name: "Edge_120", ClientID: utls.HelloEdge_120},
-	{Name: "Chrome_Android_116", ClientID: utls.HelloChrome_Android_116},
-	{Name: "Safari_iOS_16_0", ClientID: utls.HelloSafari_iOS_16_0},
+	{Name: "Firefox_120", ClientID: utls.HelloFirefox_120},
+	{Name: "Edge_106", ClientID: utls.HelloEdge_106},
+	{Name: "Chrome_131", ClientID: utls.HelloChrome_131},
+	{Name: "Chrome_133", ClientID: utls.HelloChrome_133},
 }
 
 // TLSFingerprinter manages TLS fingerprinting
@@ -69,15 +68,15 @@ func (tf *TLSFingerprinter) CreateTransport(profile TLSProfile, proxyURL string)
 func (tf *TLSFingerprinter) GetMatchingHeaderProfile(tlsProfile TLSProfile) BrowserProfile {
 	// Match TLS profile to appropriate header profile
 	switch tlsProfile.Name {
-	case "Chrome_120", "Chrome_Android_116", "Edge_120":
+	case "Chrome_120", "Chrome_131", "Chrome_133":
 		// Return Chrome-like headers
 		return browserProfiles[0] // Chrome on Windows
-	case "Firefox_117":
+	case "Firefox_120":
 		// Return Firefox headers
 		return browserProfiles[2] // Firefox on Windows
-	case "Safari_16_0", "Safari_iOS_16_0":
-		// Return Safari headers
-		return browserProfiles[4] // Safari on macOS
+	case "Edge_106":
+		// Return Edge headers
+		return browserProfiles[1] // Edge on Windows
 	default:
 		return browserProfiles[0]
 	}

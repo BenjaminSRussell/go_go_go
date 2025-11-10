@@ -311,13 +311,13 @@ func (wn *WeightedNavigator) GetLinkStats(links []Link) map[string]interface{} {
 	}
 
 	return map[string]interface{}{
-		"total_links":       totalLinks,
-		"visible_links":     visibleLinks,
-		"navigation_links":  navLinks,
-		"above_fold_links":  aboveFoldLinks,
-		"avg_weight":        avgWeight,
-		"max_weight":        maxWeight,
-		"min_weight":        minWeight,
+		"total_links":      totalLinks,
+		"visible_links":    visibleLinks,
+		"navigation_links": navLinks,
+		"above_fold_links": aboveFoldLinks,
+		"avg_weight":       avgWeight,
+		"max_weight":       maxWeight,
+		"min_weight":       minWeight,
 	}
 }
 

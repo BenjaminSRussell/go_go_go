@@ -1,0 +1,15 @@
+{"url":"https://support.example.com","depth":0,"status_code":0,"content_length":0,"title":"","link_count":0,"crawled_at":"2025-11-10T13:28:20.416539-05:00","error":"request failed: Get \"https://support.example.com\": dial tcp: lookup support.example.com: no such host"}
+{"url":"https://m.testexample.com","depth":0,"status_code":0,"content_length":0,"title":"","link_count":0,"crawled_at":"2025-11-10T13:28:20.655455-05:00","error":"request failed: Get \"https://m.testexample.com\": remote error: tls: unrecognized name"}
+{"url":"https://products.example.com","depth":0,"status_code":0,"content_length":0,"title":"","link_count":0,"crawled_at":"2025-11-10T13:28:21.102001-05:00","error":"request failed: Get \"https://products.example.com\": dial tcp: lookup products.example.com: no such host"}
+{"url":"https://www.example.com","depth":0,"status_code":200,"content_length":513,"title":"Example Domain","link_count":1,"crawled_at":"2025-11-10T13:28:21.210669-05:00"}
+{"url":"https://m.example.com","depth":0,"status_code":0,"content_length":0,"title":"","link_count":0,"crawled_at":"2025-11-10T13:28:22.05924-05:00","error":"request failed: Get \"https://m.example.com\": dial tcp: lookup m.example.com: no such host"}
+{"url":"https://dev.example.com","depth":0,"status_code":0,"content_length":0,"title":"","link_count":0,"crawled_at":"2025-11-10T13:28:22.084422-05:00","error":"request failed: Get \"https://dev.example.com\": dial tcp: lookup dev.example.com: no such host"}
+{"url":"https://example.com","depth":0,"status_code":200,"content_length":513,"title":"Example Domain","link_count":1,"crawled_at":"2025-11-10T13:28:22.108317-05:00"}
+{"url":"http://www.example.com/","depth":0,"status_code":200,"content_length":513,"title":"Example Domain","link_count":1,"crawled_at":"2025-11-10T13:28:22.161393-05:00"}
+{"url":"https://user@example.com","depth":0,"status_code":200,"content_length":513,"title":"Example Domain","link_count":1,"crawled_at":"2025-11-10T13:28:24.294762-05:00"}
+{"url":"http://www.example.com","depth":0,"status_code":200,"content_length":513,"title":"Example Domain","link_count":1,"crawled_at":"2025-11-10T13:28:24.356862-05:00"}
+{"url":"https://subjectname@example.com","depth":0,"status_code":200,"content_length":513,"title":"Example Domain","link_count":1,"crawled_at":"2025-11-10T13:28:24.421277-05:00"}
+{"url":"https://www.example.com/","depth":0,"status_code":200,"content_length":513,"title":"Example Domain","link_count":1,"crawled_at":"2025-11-10T13:28:24.48778-05:00"}
+{"url":"http://example.com/","depth":0,"status_code":200,"content_length":513,"title":"Example Domain","link_count":1,"crawled_at":"2025-11-10T13:28:24.53788-05:00"}
+{"url":"https://example.com/","depth":0,"status_code":200,"content_length":513,"title":"Example Domain","link_count":1,"crawled_at":"2025-11-10T13:28:25.030367-05:00"}
+{"url":"http://example.com","depth":0,"status_code":200,"content_length":513,"title":"Example Domain","link_count":1,"crawled_at":"2025-11-10T13:28:25.086466-05:00"}

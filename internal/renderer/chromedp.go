@@ -11,7 +11,7 @@ import (
 
 // ChromeRenderer renders pages with headless Chrome
 type ChromeRenderer struct {
-	allocCtx  context.Context
+	allocCtx    context.Context
 	allocCancel context.CancelFunc
 }
 

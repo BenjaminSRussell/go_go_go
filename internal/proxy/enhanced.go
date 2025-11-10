@@ -16,9 +16,9 @@ type EnhancedProxy struct {
 	*Proxy
 
 	// Geolocation
-	Country     string
-	City        string
-	ISP         string
+	Country string
+	City    string
+	ISP     string
 
 	// Capabilities
 	SupportsHTTPS  bool
@@ -26,8 +26,8 @@ type EnhancedProxy struct {
 	AnonymityLevel string // transparent, anonymous, elite
 
 	// Session affinity
-	LeasedTo      string    // Persona ID
-	LeaseExpires  time.Time
+	LeasedTo     string // Persona ID
+	LeaseExpires time.Time
 
 	mu sync.Mutex
 }

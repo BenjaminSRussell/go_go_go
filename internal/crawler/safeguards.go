@@ -34,9 +34,9 @@ func (sp *SafeProcessor) ProcessURLSafely(item types.URLItem) {
 
 			// Create error result
 			result := types.PageResult{
-				URL:    item.URL,
-				Depth:  item.Depth,
-				Error:  fmt.Sprintf("panic during processing: %v", r),
+				URL:   item.URL,
+				Depth: item.Depth,
+				Error: fmt.Sprintf("panic during processing: %v", r),
 			}
 
 			// Try to save result (may also panic, but that's caught by outer handler)

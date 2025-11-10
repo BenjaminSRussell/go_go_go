@@ -28,12 +28,12 @@ var (
 	maxRetries        int
 
 	// Persona & behavioral features
-	enablePersonas      bool
-	maxPersonas         int
-	personaLifetime     int
-	personaReuseLimit   int
-	enableWeightedNav   bool
-	proxyLeaseDuration  int
+	enablePersonas     bool
+	maxPersonas        int
+	personaLifetime    int
+	personaReuseLimit  int
+	enableWeightedNav  bool
+	proxyLeaseDuration int
 )
 
 var crawlCmd = &cobra.Command{
@@ -60,12 +60,12 @@ var crawlCmd = &cobra.Command{
 			MaxRetries:        maxRetries,
 
 			// Persona & behavioral features
-			EnablePersonas:      enablePersonas,
-			MaxPersonas:         maxPersonas,
-			PersonaLifetime:     time.Duration(personaLifetime) * time.Minute,
-			PersonaReuseLimit:   personaReuseLimit,
-			EnableWeightedNav:   enableWeightedNav,
-			ProxyLeaseDuration:  time.Duration(proxyLeaseDuration) * time.Minute,
+			EnablePersonas:     enablePersonas,
+			MaxPersonas:        maxPersonas,
+			PersonaLifetime:    time.Duration(personaLifetime) * time.Minute,
+			PersonaReuseLimit:  personaReuseLimit,
+			EnableWeightedNav:  enableWeightedNav,
+			ProxyLeaseDuration: time.Duration(proxyLeaseDuration) * time.Minute,
 		}
 
 		c, err := crawler.NewFromConfig(config)

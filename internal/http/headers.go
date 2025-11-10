@@ -8,135 +8,135 @@ import (
 
 // BrowserProfile represents a complete browser fingerprint
 type BrowserProfile struct {
-	UserAgent           string
-	AcceptLanguage      string
-	AcceptEncoding      string
-	Accept              string
-	SecChUA             string
-	SecChUAPlatform     string
-	SecChUAMobile       string
-	SecFetchSite        string
-	SecFetchMode        string
-	SecFetchDest        string
-	UpgradeInsecure     string
-	CacheControl        string
-	Pragma              string
+	UserAgent       string
+	AcceptLanguage  string
+	AcceptEncoding  string
+	Accept          string
+	SecChUA         string
+	SecChUAPlatform string
+	SecChUAMobile   string
+	SecFetchSite    string
+	SecFetchMode    string
+	SecFetchDest    string
+	UpgradeInsecure string
+	CacheControl    string
+	Pragma          string
 }
 
 var browserProfiles = []BrowserProfile{
 	// Chrome on Windows
 	{
-		UserAgent:           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-		AcceptLanguage:      "en-US,en;q=0.9",
-		AcceptEncoding:      "gzip, deflate, br",
-		Accept:              "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
-		SecChUA:             `"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"`,
-		SecChUAPlatform:     `"Windows"`,
-		SecChUAMobile:       "?0",
-		SecFetchSite:        "none",
-		SecFetchMode:        "navigate",
-		SecFetchDest:        "document",
-		UpgradeInsecure:     "1",
-		CacheControl:        "max-age=0",
+		UserAgent:       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+		AcceptLanguage:  "en-US,en;q=0.9",
+		AcceptEncoding:  "gzip, deflate, br",
+		Accept:          "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+		SecChUA:         `"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"`,
+		SecChUAPlatform: `"Windows"`,
+		SecChUAMobile:   "?0",
+		SecFetchSite:    "none",
+		SecFetchMode:    "navigate",
+		SecFetchDest:    "document",
+		UpgradeInsecure: "1",
+		CacheControl:    "max-age=0",
 	},
 	// Chrome on macOS
 	{
-		UserAgent:           "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-		AcceptLanguage:      "en-US,en;q=0.9",
-		AcceptEncoding:      "gzip, deflate, br",
-		Accept:              "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
-		SecChUA:             `"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"`,
-		SecChUAPlatform:     `"macOS"`,
-		SecChUAMobile:       "?0",
-		SecFetchSite:        "none",
-		SecFetchMode:        "navigate",
-		SecFetchDest:        "document",
-		UpgradeInsecure:     "1",
+		UserAgent:       "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+		AcceptLanguage:  "en-US,en;q=0.9",
+		AcceptEncoding:  "gzip, deflate, br",
+		Accept:          "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+		SecChUA:         `"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"`,
+		SecChUAPlatform: `"macOS"`,
+		SecChUAMobile:   "?0",
+		SecFetchSite:    "none",
+		SecFetchMode:    "navigate",
+		SecFetchDest:    "document",
+		UpgradeInsecure: "1",
 	},
 	// Firefox on Windows
 	{
-		UserAgent:           "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:134.0) Gecko/20100101 Firefox/134.0",
-		AcceptLanguage:      "en-US,en;q=0.5",
-		AcceptEncoding:      "gzip, deflate, br",
-		Accept:              "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-		SecFetchSite:        "none",
-		SecFetchMode:        "navigate",
-		SecFetchDest:        "document",
-		UpgradeInsecure:     "1",
-		CacheControl:        "max-age=0",
+		UserAgent:       "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:134.0) Gecko/20100101 Firefox/134.0",
+		AcceptLanguage:  "en-US,en;q=0.5",
+		AcceptEncoding:  "gzip, deflate, br",
+		Accept:          "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+		SecFetchSite:    "none",
+		SecFetchMode:    "navigate",
+		SecFetchDest:    "document",
+		UpgradeInsecure: "1",
+		CacheControl:    "max-age=0",
 	},
 	// Firefox on macOS
 	{
-		UserAgent:           "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:134.0) Gecko/20100101 Firefox/134.0",
-		AcceptLanguage:      "en-US,en;q=0.5",
-		AcceptEncoding:      "gzip, deflate, br",
-		Accept:              "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-		SecFetchSite:        "none",
-		SecFetchMode:        "navigate",
-		SecFetchDest:        "document",
-		UpgradeInsecure:     "1",
+		UserAgent:       "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:134.0) Gecko/20100101 Firefox/134.0",
+		AcceptLanguage:  "en-US,en;q=0.5",
+		AcceptEncoding:  "gzip, deflate, br",
+		Accept:          "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+		SecFetchSite:    "none",
+		SecFetchMode:    "navigate",
+		SecFetchDest:    "document",
+		UpgradeInsecure: "1",
 	},
 	// Safari on macOS
 	{
-		UserAgent:           "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.2 Safari/605.1.15",
-		AcceptLanguage:      "en-US,en;q=0.9",
-		AcceptEncoding:      "gzip, deflate, br",
-		Accept:              "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-		SecFetchSite:        "none",
-		SecFetchMode:        "navigate",
-		SecFetchDest:        "document",
+		UserAgent:      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.2 Safari/605.1.15",
+		AcceptLanguage: "en-US,en;q=0.9",
+		AcceptEncoding: "gzip, deflate, br",
+		Accept:         "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+		SecFetchSite:   "none",
+		SecFetchMode:   "navigate",
+		SecFetchDest:   "document",
 	},
 	// Edge on Windows
 	{
-		UserAgent:           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0",
-		AcceptLanguage:      "en-US,en;q=0.9",
-		AcceptEncoding:      "gzip, deflate, br",
-		Accept:              "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
-		SecChUA:             `"Microsoft Edge";v="131", "Chromium";v="131", "Not_A Brand";v="24"`,
-		SecChUAPlatform:     `"Windows"`,
-		SecChUAMobile:       "?0",
-		SecFetchSite:        "none",
-		SecFetchMode:        "navigate",
-		SecFetchDest:        "document",
-		UpgradeInsecure:     "1",
+		UserAgent:       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0",
+		AcceptLanguage:  "en-US,en;q=0.9",
+		AcceptEncoding:  "gzip, deflate, br",
+		Accept:          "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+		SecChUA:         `"Microsoft Edge";v="131", "Chromium";v="131", "Not_A Brand";v="24"`,
+		SecChUAPlatform: `"Windows"`,
+		SecChUAMobile:   "?0",
+		SecFetchSite:    "none",
+		SecFetchMode:    "navigate",
+		SecFetchDest:    "document",
+		UpgradeInsecure: "1",
 	},
 	// Chrome on Linux
 	{
-		UserAgent:           "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-		AcceptLanguage:      "en-US,en;q=0.9",
-		AcceptEncoding:      "gzip, deflate, br",
-		Accept:              "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
-		SecChUA:             `"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"`,
-		SecChUAPlatform:     `"Linux"`,
-		SecChUAMobile:       "?0",
-		SecFetchSite:        "none",
-		SecFetchMode:        "navigate",
-		SecFetchDest:        "document",
-		UpgradeInsecure:     "1",
+		UserAgent:       "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+		AcceptLanguage:  "en-US,en;q=0.9",
+		AcceptEncoding:  "gzip, deflate, br",
+		Accept:          "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+		SecChUA:         `"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"`,
+		SecChUAPlatform: `"Linux"`,
+		SecChUAMobile:   "?0",
+		SecFetchSite:    "none",
+		SecFetchMode:    "navigate",
+		SecFetchDest:    "document",
+		UpgradeInsecure: "1",
 	},
 	// Chrome Mobile on Android
 	{
-		UserAgent:           "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36",
-		AcceptLanguage:      "en-US,en;q=0.9",
-		AcceptEncoding:      "gzip, deflate, br",
-		Accept:              "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
-		SecChUA:             `"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"`,
-		SecChUAPlatform:     `"Android"`,
-		SecChUAMobile:       "?1",
-		SecFetchSite:        "none",
-		SecFetchMode:        "navigate",
-		SecFetchDest:        "document",
-		UpgradeInsecure:     "1",
+		UserAgent:       "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36",
+		AcceptLanguage:  "en-US,en;q=0.9",
+		AcceptEncoding:  "gzip, deflate, br",
+		Accept:          "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+		SecChUA:         `"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"`,
+		SecChUAPlatform: `"Android"`,
+		SecChUAMobile:   "?1",
+		SecFetchSite:    "none",
+		SecFetchMode:    "navigate",
+		SecFetchDest:    "document",
+		UpgradeInsecure: "1",
 	},
 	// Safari on iOS
 	{
-		UserAgent:           "Mozilla/5.0 (iPhone; CPU iPhone OS 18_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.2 Mobile/15E148 Safari/604.1",
-		AcceptLanguage:      "en-US,en;q=0.9",
-		AcceptEncoding:      "gzip, deflate, br",
-		Accept:              "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-		SecFetchSite:        "none",
-		SecFetchMode:        "navigate",
-		SecFetchDest:        "document",
+		UserAgent:      "Mozilla/5.0 (iPhone; CPU iPhone OS 18_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.2 Mobile/15E148 Safari/604.1",
+		AcceptLanguage: "en-US,en;q=0.9",
+		AcceptEncoding: "gzip, deflate, br",
+		Accept:         "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+		SecFetchSite:   "none",
+		SecFetchMode:   "navigate",
+		SecFetchDest:   "document",
 	},
 }
 

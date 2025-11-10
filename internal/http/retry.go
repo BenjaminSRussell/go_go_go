@@ -9,10 +9,10 @@ import (
 
 // RetryConfig holds retry configuration
 type RetryConfig struct {
-	MaxRetries      int
-	InitialBackoff  time.Duration
-	MaxBackoff      time.Duration
-	BackoffFactor   float64
+	MaxRetries     int
+	InitialBackoff time.Duration
+	MaxBackoff     time.Duration
+	BackoffFactor  float64
 }
 
 // DefaultRetryConfig returns default retry configuration
@@ -34,10 +34,10 @@ type RetryHandler struct {
 }
 
 type hostRetryState struct {
-	mu             sync.Mutex
+	mu               sync.Mutex
 	consecutiveFails int
-	lastFailTime   time.Time
-	backoffUntil   time.Time
+	lastFailTime     time.Time
+	backoffUntil     time.Time
 }
 
 // NewRetryHandler creates a new retry handler
@@ -56,11 +56,11 @@ func (rh *RetryHandler) ShouldRetry(statusCode int, err error) bool {
 
 	// Retry on specific status codes
 	switch statusCode {
-	case http.StatusTooManyRequests,     // 429
-		http.StatusInternalServerError,  // 500
-		http.StatusBadGateway,           // 502
-		http.StatusServiceUnavailable,   // 503
-		http.StatusGatewayTimeout:       // 504
+	case http.StatusTooManyRequests, // 429
+		http.StatusInternalServerError, // 500
+		http.StatusBadGateway,          // 502
+		http.StatusServiceUnavailable,  // 503
+		http.StatusGatewayTimeout:      // 504
 		return true
 	}
 
@@ -156,9 +156,9 @@ func (rh *RetryHandler) GetStats(host string) map[string]interface{} {
 
 	return map[string]interface{}{
 		"consecutive_fails": state.consecutiveFails,
-		"last_fail_time":   state.lastFailTime,
-		"backoff_until":    state.backoffUntil,
-		"in_backoff":       time.Now().Before(state.backoffUntil),
+		"last_fail_time":    state.lastFailTime,
+		"backoff_until":     state.backoffUntil,
+		"in_backoff":        time.Now().Before(state.backoffUntil),
 	}
 }
 
