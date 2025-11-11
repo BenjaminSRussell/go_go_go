@@ -1,0 +1,21 @@
+{
+  "StartURL": "https://example.com",
+  "Workers": 2,
+  "Timeout": 5000000000,
+  "DataDir": "./data",
+  "SeedingStrategy": "none",
+  "IgnoreRobots": false,
+  "EnableRedis": false,
+  "RedisURL": "",
+  "EnableTLS": false,
+  "EnableJSRendering": false,
+  "EnableSQLite": false,
+  "UseHeaderRotation": true,
+  "MaxRetries": 3,
+  "EnablePersonas": false,
+  "MaxPersonas": 50,
+  "PersonaLifetime": 1800000000000,
+  "PersonaReuseLimit": 100,
+  "EnableWeightedNav": false,
+  "CrawlExternalLinks": false
+}

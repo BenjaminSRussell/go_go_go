@@ -28,6 +28,7 @@ type Config struct {
 	PersonaLifetime   time.Duration
 	PersonaReuseLimit int
 	EnableWeightedNav bool
+	CrawlExternalLinks bool
 }
 
 // Results contains crawl statistics

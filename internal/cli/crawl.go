@@ -32,6 +32,7 @@ var (
 	personaLifetime   int
 	personaReuseLimit int
 	enableWeightedNav bool
+	crawlExternalLinks bool
 )
 
 var crawlCmd = &cobra.Command{
@@ -62,6 +63,7 @@ var crawlCmd = &cobra.Command{
 			PersonaLifetime:   time.Duration(personaLifetime) * time.Minute,
 			PersonaReuseLimit: personaReuseLimit,
 			EnableWeightedNav: enableWeightedNav,
+			CrawlExternalLinks: crawlExternalLinks,
 		}
 
 		c, err := crawler.NewFromConfig(config)
@@ -99,6 +101,7 @@ func init() {
 	crawlCmd.Flags().BoolVar(&enableSQLite, "enable-sqlite", false, "Use SQLite for queryable storage instead of JSONL")
 	crawlCmd.Flags().BoolVar(&useHeaderRotation, "use-header-rotation", true, "Rotate browser headers")
 	crawlCmd.Flags().IntVar(&maxRetries, "max-retries", 3, "Maximum retry attempts per URL")
+	crawlCmd.Flags().BoolVar(&crawlExternalLinks, "crawl-external-links", false, "Crawl links to external websites")
 
 	// Persona & behavioral features
 	crawlCmd.Flags().BoolVar(&enablePersonas, "enable-personas", false, "Enable persona-based crawling with session persistence")

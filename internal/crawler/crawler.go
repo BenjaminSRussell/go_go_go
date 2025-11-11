@@ -471,12 +471,16 @@ func (c *Crawler) shouldCrawl(link, baseURL string) bool {
 		return false
 	}
 
-	parsedBase, err := url.Parse(baseURL)
-	if err != nil {
+	if parsedLink.Scheme != "http" && parsedLink.Scheme != "https" {
 		return false
 	}
 
-	if parsedLink.Scheme != "http" && parsedLink.Scheme != "https" {
+	if c.config.CrawlExternalLinks {
+		return true
+	}
+
+	parsedBase, err := url.Parse(baseURL)
+	if err != nil {
 		return false
 	}
 
