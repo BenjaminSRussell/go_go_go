@@ -25,7 +25,6 @@ func TestCrawlConfigCreation(t *testing.T) {
 		DataDir:         "/tmp/crawl",
 		SeedingStrategy: "sitemap",
 		IgnoreRobots:    false,
-		EnableProxies:   false,
 		EnablePersonas:  false,
 		MaxRetries:      3,
 	}

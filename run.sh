@@ -39,30 +39,30 @@ EOF
 }
 
 setup() {
-	echo "📦 Tidying Go dependencies..."
-	$GO_BIN mod tidy || { echo "❌ Failed to tidy dependencies"; exit 1; }
+	echo " Tidying Go dependencies..."
+	$GO_BIN mod tidy || { echo " Failed to tidy dependencies"; exit 1; }
 	
-	echo "✓ Building $BINARY_NAME..."
-	$GO_BIN build -o $BINARY_NAME ./cmd/gogogoscraper || { echo "❌ Failed to build"; exit 1; }
-	echo "✓ Build successful"
+	echo " Building $BINARY_NAME..."
+	$GO_BIN build -o $BINARY_NAME ./cmd/gogogoscraper || { echo " Failed to build"; exit 1; }
+	echo " Build successful"
 }
 
 run_tests() {
-	echo "🧪 Running tests..."
-	$GO_BIN test ./... || { echo "❌ Tests failed"; exit 1; }
-	echo "✓ All tests passed"
+	echo " Running tests..."
+	$GO_BIN test ./... || { echo " Tests failed"; exit 1; }
+	echo " All tests passed"
 }
 
 run_crawler() {
 	if [ $# -eq 0 ]; then
-		echo "❌ Error: No command specified"
+		echo " Error: No command specified"
 		show_help
 		exit 1
 	fi
 	
 	setup
 	
-	echo "🚀 Starting crawler..."
+	echo " Starting crawler..."
 	./$BINARY_NAME "$@"
 }
 
@@ -79,7 +79,7 @@ main() {
 			run_crawler "$@"
 			;;
 		*)
-			echo "❌ Unknown command: $1"
+			echo " Unknown command: $1"
 			show_help
 			exit 1
 			;;

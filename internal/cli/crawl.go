@@ -20,7 +20,6 @@ var (
 	redisURL        string
 
 	// Advanced features
-	enableProxies     bool
 	enableTLS         bool
 	enableJSRendering bool
 	enableSQLite      bool
@@ -28,12 +27,11 @@ var (
 	maxRetries        int
 
 	// Persona & behavioral features
-	enablePersonas     bool
-	maxPersonas        int
-	personaLifetime    int
-	personaReuseLimit  int
-	enableWeightedNav  bool
-	proxyLeaseDuration int
+	enablePersonas    bool
+	maxPersonas       int
+	personaLifetime   int
+	personaReuseLimit int
+	enableWeightedNav bool
 )
 
 var crawlCmd = &cobra.Command{
@@ -52,7 +50,6 @@ var crawlCmd = &cobra.Command{
 			RedisURL:        redisURL,
 
 			// Advanced features
-			EnableProxies:     enableProxies,
 			EnableTLS:         enableTLS,
 			EnableJSRendering: enableJSRendering,
 			EnableSQLite:      enableSQLite,
@@ -60,12 +57,11 @@ var crawlCmd = &cobra.Command{
 			MaxRetries:        maxRetries,
 
 			// Persona & behavioral features
-			EnablePersonas:     enablePersonas,
-			MaxPersonas:        maxPersonas,
-			PersonaLifetime:    time.Duration(personaLifetime) * time.Minute,
-			PersonaReuseLimit:  personaReuseLimit,
-			EnableWeightedNav:  enableWeightedNav,
-			ProxyLeaseDuration: time.Duration(proxyLeaseDuration) * time.Minute,
+			EnablePersonas:    enablePersonas,
+			MaxPersonas:       maxPersonas,
+			PersonaLifetime:   time.Duration(personaLifetime) * time.Minute,
+			PersonaReuseLimit: personaReuseLimit,
+			EnableWeightedNav: enableWeightedNav,
 		}
 
 		c, err := crawler.NewFromConfig(config)
@@ -98,7 +94,6 @@ func init() {
 	crawlCmd.Flags().StringVar(&redisURL, "redis-url", "", "Redis connection URL")
 
 	// Advanced features
-	crawlCmd.Flags().BoolVar(&enableProxies, "enable-proxies", false, "Enable proxy rotation (uses free proxy lists)")
 	crawlCmd.Flags().BoolVar(&enableTLS, "enable-tls-fingerprint", false, "Enable TLS fingerprinting to mimic real browsers")
 	crawlCmd.Flags().BoolVar(&enableJSRendering, "enable-js-rendering", false, "Enable JavaScript rendering with headless Chrome")
 	crawlCmd.Flags().BoolVar(&enableSQLite, "enable-sqlite", false, "Use SQLite for queryable storage instead of JSONL")
@@ -111,7 +106,6 @@ func init() {
 	crawlCmd.Flags().IntVar(&personaLifetime, "persona-lifetime", 30, "Persona lifetime in minutes")
 	crawlCmd.Flags().IntVar(&personaReuseLimit, "persona-reuse-limit", 100, "Maximum requests per persona")
 	crawlCmd.Flags().BoolVar(&enableWeightedNav, "enable-weighted-nav", false, "Use weighted navigation (prefer visible/important links)")
-	crawlCmd.Flags().IntVar(&proxyLeaseDuration, "proxy-lease-duration", 15, "Proxy lease duration in minutes (session affinity)")
 
 	crawlCmd.MarkFlagRequired("start-url")
 }

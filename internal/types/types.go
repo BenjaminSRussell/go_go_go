@@ -16,7 +16,6 @@ type Config struct {
 	RedisURL        string
 
 	// Advanced features
-	EnableProxies     bool
 	EnableTLS         bool
 	EnableJSRendering bool
 	EnableSQLite      bool
@@ -24,12 +23,11 @@ type Config struct {
 	MaxRetries        int
 
 	// Persona & behavioral features
-	EnablePersonas     bool
-	MaxPersonas        int
-	PersonaLifetime    time.Duration
-	PersonaReuseLimit  int
-	EnableWeightedNav  bool
-	ProxyLeaseDuration time.Duration
+	EnablePersonas    bool
+	MaxPersonas       int
+	PersonaLifetime   time.Duration
+	PersonaReuseLimit int
+	EnableWeightedNav bool
 }
 
 // Results contains crawl statistics

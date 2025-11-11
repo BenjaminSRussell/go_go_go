@@ -13,17 +13,17 @@ A high-performance web crawler written in Go with advanced anti-bot evasion capa
 - **Robot Exclusion**: Respects robots.txt by default
 - **Sitemap Export**: Generate XML sitemaps from crawl results
 
-### Advanced Anti-Bot Evasion
+### Advanced Features
 
-**⚠️ Ethical Use Warning**: These features are designed for legitimate web scraping with permission, security testing with authorization, or educational purposes. Always respect robots.txt and website terms of service.
+**Ethical Use Warning**: These features are designed for legitimate web scraping with permission, security testing with authorization, or educational purposes. Always respect robots.txt and website terms of service.
 
 - **TLS Fingerprinting**: Mimics real browser TLS handshakes (Chrome, Firefox, Safari, Edge) using `utls` to bypass JA3 fingerprint detection
 - **Browser Header Rotation**: Rotates complete, matching browser header sets (User-Agent + 15+ additional headers) to appear as real users
-- **Proxy Rotation**: Automatic proxy management with validation, health checking, and rotation from free proxy lists
 - **JavaScript Rendering**: Headless Chrome integration with `chromedp` for SPA/React/Vue sites
 - **Intelligent Retry Logic**: Exponential backoff with per-host tracking for 429/5xx errors
 - **Advanced HTML Parsing**: CSS selector-based extraction with `goquery` for structured data
 - **SQLite Storage**: Queryable database storage with full-text search and analytics
+- **Persona Management**: Session-based crawling with behavioral delays and fingerprint consistency
 
 ## Installation
 
@@ -44,7 +44,7 @@ go build -o gogogoscraper ./cmd/gogogoscraper
 ./gogogoscraper crawl --start-url https://example.com
 ```
 
-### Advanced Crawl with Anti-Bot Features
+### Advanced Crawl with Enhanced Features
 
 ```bash
 # Enable all advanced features
@@ -52,7 +52,6 @@ go build -o gogogoscraper ./cmd/gogogoscraper
   --start-url https://example.com \
   --workers 64 \
   --timeout 15 \
-  --enable-proxies \
   --enable-tls-fingerprint \
   --enable-js-rendering \
   --enable-sqlite \
@@ -97,15 +96,16 @@ go build -o gogogoscraper ./cmd/gogogoscraper
 | `--ignore-robots` | false | Skip robots.txt (not recommended) |
 | `--max-retries` | 3 | Maximum retry attempts per URL |
 
-### Advanced Anti-Bot Options
+### Advanced Options
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--enable-proxies` | false | Enable proxy rotation with automatic validation |
 | `--enable-tls-fingerprint` | false | Mimic browser TLS fingerprints (bypass JA3 detection) |
 | `--enable-js-rendering` | false | Render JavaScript with headless Chrome |
 | `--enable-sqlite` | false | Use SQLite instead of JSONL for queryable data |
 | `--use-header-rotation` | true | Rotate realistic browser headers |
+| `--enable-personas` | false | Enable persona-based crawling with session persistence |
+| `--enable-weighted-nav` | false | Use weighted navigation (prefer visible/important links) |
 
 ## Advanced Features Explained
 
@@ -121,23 +121,7 @@ go build -o gogogoscraper ./cmd/gogogoscraper
 
 Automatically rotates between Chrome, Firefox, Safari, and Edge fingerprints.
 
-### 2. Proxy Rotation
-
-**Problem**: IP bans and rate limiting.
-
-**Solution**: Automatic proxy management system:
-- Scrapes free proxy lists every 10 minutes
-- Validates proxies (5-second timeout test)
-- Maintains pool of working proxies
-- Auto-removes dead/slow proxies
-
-```bash
---enable-proxies
-```
-
-**Note**: Free proxies are unreliable. For production, use paid proxy services.
-
-### 3. Browser Header Rotation
+### 2. Browser Header Rotation
 
 **Problem**: WAFs check 15+ headers, not just User-Agent.
 
@@ -157,7 +141,7 @@ Automatically rotates between Chrome, Firefox, Safari, and Edge fingerprints.
 
 TLS profile, headers, and User-Agent always match (e.g., Chrome TLS = Chrome headers).
 
-### 4. JavaScript Rendering
+### 3. JavaScript Rendering
 
 **Problem**: SPA frameworks (React, Vue, Angular) render content client-side.
 
@@ -173,7 +157,7 @@ TLS profile, headers, and User-Agent always match (e.g., Chrome TLS = Chrome hea
 
 **Performance**: Only renders pages that need it (~5-10% of pages).
 
-### 5. SQLite Storage
+### 4. SQLite Storage
 
 **Problem**: JSONL is write-only, can't query data.
 
@@ -200,7 +184,7 @@ GROUP BY target_url ORDER BY count DESC LIMIT 10;
 SELECT url FROM meta_tags WHERE name = 'og:type' AND content = 'article';
 ```
 
-### 6. Intelligent Retry Logic
+### 5. Intelligent Retry Logic
 
 **Automatic features** (no flag needed):
 - Exponential backoff: 1s → 2s → 4s → 8s
@@ -273,13 +257,13 @@ Typical: 50-200 URLs/minute (depends on page size)
   --seeding-strategy sitemap \
   --max-retries 2
 
-# Maximum evasion (for authorized testing)
+# Maximum features (for authorized testing)
 ./gogogoscraper crawl \
   --start-url https://example.com \
   --workers 32 \
-  --enable-proxies \
   --enable-tls-fingerprint \
   --enable-js-rendering \
+  --enable-personas \
   --use-header-rotation \
   --max-retries 5
 
@@ -300,8 +284,9 @@ internal/
 ├── crawler/         # Main crawler engine with worker pools
 ├── parser/          # HTML parsing with goquery (CSS selectors)
 ├── http/            # Headers, TLS, retry logic
-├── proxy/           # Proxy manager with validation
 ├── renderer/        # Headless Chrome (chromedp)
+├── persona/         # Persona management for behavioral crawling
+├── navigation/      # Weighted navigation strategies
 ├── seeding/         # URL discovery strategies
 ├── storage/         # JSONL and SQLite storage
 └── types/           # Shared types
@@ -319,14 +304,14 @@ internal/
 
 This tool includes powerful anti-bot features. Use responsibly:
 
-✅ **Allowed**:
+**Allowed**:
 - Scraping with explicit permission
 - Authorized penetration testing
 - Security research with consent
 - Educational purposes
 - Your own websites
 
-❌ **Not Allowed**:
+**Not Allowed**:
 - Bypassing rate limits without permission
 - Ignoring robots.txt (without good reason)
 - DDoS or mass targeting
@@ -346,9 +331,8 @@ This tool includes powerful anti-bot features. Use responsibly:
 | Slow crawling | Normal - network I/O bound | Expected behavior |
 | Many timeouts | Unreachable hosts from CT logs | Use `--seeding-strategy sitemap` |
 | High memory | Too many workers × large pages | Reduce `--workers` to 32-64 |
-| 429 errors | Rate limited | Reduce workers, enable `--enable-proxies` |
+| 429 errors | Rate limited | Reduce workers, increase delays |
 | Empty results | JS-rendered content | Enable `--enable-js-rendering` |
-| Proxy failures | Free proxies are unreliable | Expected ~90% failure rate |
 
 ## Comparison with Rust Scraper
 

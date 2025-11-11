@@ -12,26 +12,13 @@ type CrawlerInterface interface {
 	Close() error
 }
 
-// NewFromConfig creates appropriate crawler based on configuration
+// NewFromConfig creates a crawler based on configuration
 func NewFromConfig(config types.Config) (CrawlerInterface, error) {
-	// Validate configuration
 	if err := validateConfig(config); err != nil {
 		return nil, fmt.Errorf("invalid configuration: %w", err)
 	}
 
-	// Check if advanced features are enabled
-	hasAdvancedFeatures := config.EnablePersonas ||
-		config.EnableProxies ||
-		config.EnableWeightedNav ||
-		config.EnableJSRendering ||
-		config.EnableSQLite
-
-	if hasAdvancedFeatures {
-		fmt.Println("Creating enhanced crawler with advanced features...")
-		return NewEnhanced(config)
-	}
-
-	fmt.Println("Creating standard crawler...")
+	fmt.Println("Creating crawler...")
 	return New(config)
 }
 
@@ -57,7 +44,6 @@ func validateConfig(config types.Config) error {
 		return fmt.Errorf("data directory is required")
 	}
 
-	// Validate persona settings if enabled
 	if config.EnablePersonas {
 		if config.MaxPersonas <= 0 {
 			config.MaxPersonas = 50
@@ -67,7 +53,6 @@ func validateConfig(config types.Config) error {
 		}
 	}
 
-	// Validate retry settings
 	if config.MaxRetries < 0 {
 		return fmt.Errorf("max retries cannot be negative, got %d", config.MaxRetries)
 	}
