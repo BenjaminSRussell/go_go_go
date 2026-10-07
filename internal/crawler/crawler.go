@@ -484,8 +484,11 @@ func (c *Crawler) shouldCrawl(link, baseURL string) bool {
 		return false
 	}
 
-	if !strings.HasSuffix(parsedLink.Host, parsedBase.Host) &&
-		parsedLink.Host != parsedBase.Host {
+	// Exact host or proper subdomain (".example.com"). HasSuffix alone is wrong:
+	// "notexample.com" HasSuffix "example.com" and would leak the crawl (#18).
+	linkHost := strings.ToLower(parsedLink.Hostname())
+	baseHost := strings.ToLower(parsedBase.Hostname())
+	if linkHost != baseHost && !strings.HasSuffix(linkHost, "."+baseHost) {
 		return false
 	}
 
