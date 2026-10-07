@@ -172,6 +172,15 @@ func New(config types.Config) (*Crawler, error) {
 }
 
 // Resume restores crawler from saved state
+
+// FrontierSize returns pending URLs in the frontier (for resume diagnostics).
+func (c *Crawler) FrontierSize() int {
+	if c == nil || c.frontier == nil {
+		return 0
+	}
+	return c.frontier.Size()
+}
+
 func Resume(dataDir string) (*Crawler, error) {
 	// Load config
 	store, err := storage.New(dataDir)
@@ -189,12 +198,13 @@ func Resume(dataDir string) (*Crawler, error) {
 		return nil, err
 	}
 
-	// Restore frontier
+	// Restore frontier from saved pending URLs only. New() seeds StartURL;
+	// resume must not treat that as restored work (#16).
 	urls, err := store.LoadPendingURLs()
 	if err != nil {
 		return nil, fmt.Errorf("failed to load pending URLs: %w", err)
 	}
-
+	c.frontier = NewFrontier()
 	for _, item := range urls {
 		c.frontier.Add(item)
 	}

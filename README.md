@@ -1,5 +1,7 @@
 # Go Go Go Scraper
 
+[![CI](https://github.com/BenjaminSRussell/go_go_go/actions/workflows/ci.yml/badge.svg)](https://github.com/BenjaminSRussell/go_go_go/actions/workflows/ci.yml)
+
 A high-performance web crawler written in Go with advanced anti-bot evasion capabilities. Optimized for URL discovery, data extraction, and sitemap generation.
 
 ## Features
