@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -90,4 +91,25 @@ func TestConfigValidationComplete(t *testing.T) {
 	if !valid {
 		t.Error("Expected complete config to be valid")
 	}
+}
+
+func TestResumeEmptyDataDirErrors(t *testing.T) {
+	dir := t.TempDir()
+	resumeDataDir = dir
+	err := resumeCmd.RunE(resumeCmd, nil)
+	if err == nil {
+		t.Fatal("expected error for empty resume data-dir")
+	}
+	if !strings.Contains(err.Error(), dir) {
+		t.Fatalf("error should name data-dir %q, got %v", dir, err)
+	}
+}
+
+func indexOf(s, sub string) int {
+	for i := 0; i+len(sub) <= len(s); i++ {
+		if s[i:i+len(sub)] == sub {
+			return i
+		}
+	}
+	return -1
 }

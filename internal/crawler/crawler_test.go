@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/BenjaminSRussell/go_go_go/internal/storage"
 	"github.com/BenjaminSRussell/go_go_go/internal/types"
 )
 
@@ -62,5 +63,26 @@ func TestFrontierExhaustedRequiresZeroInFlight(t *testing.T) {
 	c.inFlight.Store(0)
 	if !(c.frontier.IsEmpty() && c.inFlight.Load() == 0) {
 		t.Fatal("expected exhausted after in-flight drained")
+	}
+}
+
+func TestResumeEmptyFrontierReportsZeroSize(t *testing.T) {
+	dir := t.TempDir()
+	store, err := storage.New(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cfg := types.Config{StartURL: "https://example.com", Workers: 1, Timeout: time.Second, DataDir: dir}
+	if err := store.SaveConfig(cfg); err != nil {
+		t.Fatal(err)
+	}
+	store.Close()
+
+	c, err := Resume(dir)
+	if err != nil {
+		t.Fatalf("Resume: %v", err)
+	}
+	if sz := c.FrontierSize(); sz != 0 {
+		t.Fatalf("expected empty frontier, got %d", sz)
 	}
 }
