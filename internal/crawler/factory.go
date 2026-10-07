@@ -61,5 +61,13 @@ func validateConfig(config types.Config) error {
 		return fmt.Errorf("max retries too high (max 10), got %d", config.MaxRetries)
 	}
 
+	if config.MaxDepth < 0 {
+		return fmt.Errorf("max depth cannot be negative, got %d", config.MaxDepth)
+	}
+
+	if config.MaxPages < 0 {
+		return fmt.Errorf("max pages cannot be negative, got %d", config.MaxPages)
+	}
+
 	return nil
 }
