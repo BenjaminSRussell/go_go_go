@@ -233,6 +233,28 @@ WHERE pages_fts MATCH 'pricing' ORDER BY score DESC LIMIT 10;
 - Network errors: Retry with backoff
 - 4xx (except 429): No retry
 
+## Crawl State, Resume & Parquet Export
+
+With `--enable-sqlite`, `data/crawl.db` is the queryable crawl state:
+
+| Table | Contents |
+|-------|----------|
+| `pages` | one row per fetched URL: status, length, title, `content_hash` (SHA-256 of the body, for dedupe), `crawled_at`, error |
+| `links` | link graph (`source_url`, `target_url`) |
+| `frontier` | pending URLs (enqueued, not yet saved to `pages`) |
+
+**Resume**: `gogogoscraper resume --data-dir ./data` reloads the pending frontier from `crawl.db` and skips every URL already in `pages`, so an interrupted crawl (Ctrl-C, `--max-pages`, crash) picks up where it stopped without refetching.
+
+**Parquet export** (DuckDB / pandas / Spark):
+
+```bash
+./bin/gogogoscraper export-parquet --data-dir ./data --output pages.parquet --links links.parquet
+duckdb -c "SELECT status_code, count(*) FROM 'pages.parquet' GROUP BY 1"
+duckdb -c "SELECT content_hash, count(*) n FROM 'pages.parquet' GROUP BY 1 HAVING n > 1"  -- duplicate content
+```
+
+Without `crawl.db`, pages are exported from `sitemap.jsonl` (the links file needs `--enable-sqlite`).
+
 ## Polite Crawling
 
 By default the crawler behaves as a well-mannered bot:

@@ -7,6 +7,7 @@ require (
 	github.com/bits-and-blooms/bloom/v3 v3.7.1
 	github.com/chromedp/chromedp v0.14.2
 	github.com/mattn/go-sqlite3 v1.14.32
+	github.com/parquet-go/parquet-go v0.25.1
 	github.com/refraction-networking/utls v1.8.1
 	github.com/spf13/cobra v1.10.1
 	github.com/temoto/robotstxt v1.1.2
@@ -14,7 +15,7 @@ require (
 )
 
 require (
-	github.com/andybalholm/brotli v1.0.6 // indirect
+	github.com/andybalholm/brotli v1.1.0 // indirect
 	github.com/andybalholm/cascadia v1.3.3 // indirect
 	github.com/bits-and-blooms/bitset v1.24.2 // indirect
 	github.com/chromedp/cdproto v0.0.0-20250724212937-08a3db8b4327 // indirect
@@ -23,8 +24,10 @@ require (
 	github.com/gobwas/httphead v0.1.0 // indirect
 	github.com/gobwas/pool v0.2.1 // indirect
 	github.com/gobwas/ws v1.4.0 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
-	github.com/klauspost/compress v1.17.4 // indirect
+	github.com/klauspost/compress v1.17.9 // indirect
+	github.com/pierrec/lz4/v4 v4.1.21 // indirect
 	github.com/spf13/pflag v1.0.9 // indirect
 	golang.org/x/crypto v0.43.0 // indirect
 	golang.org/x/sys v0.37.0 // indirect

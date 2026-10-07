@@ -73,6 +73,8 @@ type PageResult struct {
 	MetaKeywords    string    `json:"meta_keywords,omitempty"`
 	ImageCount      int       `json:"image_count,omitempty"`
 	ScriptCount     int       `json:"script_count,omitempty"`
+	// ContentHash is the hex SHA-256 of the fetched body (dedupe across URLs).
+	ContentHash string `json:"content_hash,omitempty"`
 }
 
 // Link is an outbound hyperlink from a crawled page.

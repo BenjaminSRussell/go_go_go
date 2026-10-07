@@ -18,5 +18,6 @@ func init() {
 	rootCmd.AddCommand(crawlCmd)
 	rootCmd.AddCommand(resumeCmd)
 	rootCmd.AddCommand(exportCmd)
+	rootCmd.AddCommand(exportParquetCmd)
 	rootCmd.AddCommand(searchCmd)
 }
