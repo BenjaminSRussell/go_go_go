@@ -13,6 +13,13 @@ type Config struct {
 	SeedingStrategy string
 	IgnoreRobots    bool
 
+	// Politeness: UserAgent overrides rotated/persona UAs when set and is the
+	// identity matched against robots.txt groups. PerHostConcurrency caps
+	// simultaneous requests per host (0 = default 2). Crawl-Delay from
+	// robots.txt is honored automatically unless IgnoreRobots is set.
+	UserAgent          string
+	PerHostConcurrency int
+
 	// Crawl bounds (MaxDepth default 5; MaxPages 0 = unlimited)
 	MaxDepth int
 	MaxPages int64
@@ -27,11 +34,11 @@ type Config struct {
 	MaxRetries        int
 
 	// Persona & behavioral features
-	EnablePersonas    bool
-	MaxPersonas       int
-	PersonaLifetime   time.Duration
-	PersonaReuseLimit int
-	EnableWeightedNav bool
+	EnablePersonas     bool
+	MaxPersonas        int
+	PersonaLifetime    time.Duration
+	PersonaReuseLimit  int
+	EnableWeightedNav  bool
 	CrawlExternalLinks bool
 
 	// MetricsAddr if non-empty (e.g. ":9090") serves Prometheus text at /metrics
@@ -54,20 +61,19 @@ type URLItem struct {
 
 // PageResult contains information about a crawled page
 type PageResult struct {
-	URL              string    `json:"url"`
-	Depth            int       `json:"depth"`
-	StatusCode       int       `json:"status_code"`
-	ContentLength    int64     `json:"content_length"`
-	Title            string    `json:"title"`
-	LinkCount        int       `json:"link_count"`
-	CrawledAt        time.Time `json:"crawled_at"`
-	Error            string    `json:"error,omitempty"`
-	MetaDescription  string    `json:"meta_description,omitempty"`
-	MetaKeywords     string    `json:"meta_keywords,omitempty"`
-	ImageCount       int       `json:"image_count,omitempty"`
-	ScriptCount      int       `json:"script_count,omitempty"`
+	URL             string    `json:"url"`
+	Depth           int       `json:"depth"`
+	StatusCode      int       `json:"status_code"`
+	ContentLength   int64     `json:"content_length"`
+	Title           string    `json:"title"`
+	LinkCount       int       `json:"link_count"`
+	CrawledAt       time.Time `json:"crawled_at"`
+	Error           string    `json:"error,omitempty"`
+	MetaDescription string    `json:"meta_description,omitempty"`
+	MetaKeywords    string    `json:"meta_keywords,omitempty"`
+	ImageCount      int       `json:"image_count,omitempty"`
+	ScriptCount     int       `json:"script_count,omitempty"`
 }
-
 
 // Link is an outbound hyperlink from a crawled page.
 type Link struct {
