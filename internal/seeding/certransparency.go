@@ -9,6 +9,14 @@ import (
 	"strings"
 )
 
+// Test hooks (override in httptest tests).
+var (
+	httpClient = http.DefaultClient
+	crtShURL   = func(domain string) string {
+		return fmt.Sprintf("https://crt.sh/?q=%%.%s&output=json", domain)
+	}
+)
+
 // DiscoverFromCertificateTransparency discovers subdomains from CT logs
 func DiscoverFromCertificateTransparency(startURL string) ([]string, error) {
 	parsedURL, err := url.Parse(startURL)
@@ -17,15 +25,11 @@ func DiscoverFromCertificateTransparency(startURL string) ([]string, error) {
 	}
 
 	domain := parsedURL.Host
-	// Remove port if present
 	if idx := strings.Index(domain, ":"); idx != -1 {
 		domain = domain[:idx]
 	}
 
-	// Query crt.sh for certificates
-	ctURL := fmt.Sprintf("https://crt.sh/?q=%%.%s&output=json", domain)
-
-	resp, err := http.Get(ctURL)
+	resp, err := httpClient.Get(crtShURL(domain))
 	if err != nil {
 		return nil, fmt.Errorf("failed to query CT logs: %w", err)
 	}
@@ -43,33 +47,30 @@ func DiscoverFromCertificateTransparency(startURL string) ([]string, error) {
 	var certs []struct {
 		NameValue string `json:"name_value"`
 	}
-
 	if err := json.Unmarshal(body, &certs); err != nil {
 		return nil, fmt.Errorf("failed to parse CT response: %w", err)
 	}
 
-	// Extract unique subdomains
 	subdomains := make(map[string]bool)
 	for _, cert := range certs {
-		names := strings.Split(cert.NameValue, "\n")
-		for _, name := range names {
+		for _, name := range strings.Split(cert.NameValue, "\n") {
 			name = strings.TrimSpace(name)
-			// Skip wildcards
 			if strings.HasPrefix(name, "*.") {
 				name = name[2:]
 			}
-			// Must end with our domain
 			if strings.HasSuffix(name, domain) {
 				subdomains[name] = true
 			}
 		}
 	}
 
-	// Convert to URLs
+	scheme := parsedURL.Scheme
+	if scheme == "" {
+		scheme = "https"
+	}
 	urls := make([]string, 0, len(subdomains))
 	for subdomain := range subdomains {
-		urls = append(urls, fmt.Sprintf("%s://%s", parsedURL.Scheme, subdomain))
+		urls = append(urls, fmt.Sprintf("%s://%s", scheme, subdomain))
 	}
-
 	return urls, nil
 }
