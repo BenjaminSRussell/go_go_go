@@ -56,3 +56,10 @@ type PageResult struct {
 	CrawledAt     time.Time `json:"crawled_at"`
 	Error         string    `json:"error,omitempty"`
 }
+
+
+// Link is an outbound hyperlink from a crawled page.
+type Link struct {
+	TargetURL  string `json:"target_url"`
+	AnchorText string `json:"anchor_text,omitempty"`
+}

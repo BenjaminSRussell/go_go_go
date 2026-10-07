@@ -49,6 +49,7 @@ func NewSQLiteStorage(dbPath string) (*SQLiteStorage, error) {
 		source_url TEXT NOT NULL,
 		target_url TEXT NOT NULL,
 		anchor_text TEXT,
+		UNIQUE(source_url, target_url),
 		FOREIGN KEY (source_url) REFERENCES pages(url)
 	);
 
@@ -112,6 +113,10 @@ func (s *SQLiteStorage) SaveMetaTags(url string, metaTags map[string]string) err
 	}
 	defer tx.Rollback()
 
+	if _, err := tx.Exec("DELETE FROM meta_tags WHERE url = ?", url); err != nil {
+		return err
+	}
+
 	stmt, err := tx.Prepare("INSERT INTO meta_tags (url, name, content) VALUES (?, ?, ?)")
 	if err != nil {
 		return err
@@ -127,11 +132,48 @@ func (s *SQLiteStorage) SaveMetaTags(url string, metaTags map[string]string) err
 	return tx.Commit()
 }
 
-// SaveStructuredData saves JSON-LD structured data
+// SaveStructuredData saves JSON-LD structured data (replace-by-URL).
 func (s *SQLiteStorage) SaveStructuredData(url, jsonData string) error {
-	query := "INSERT INTO structured_data (url, json_data) VALUES (?, ?)"
-	_, err := s.db.Exec(query, url, jsonData)
-	return err
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	if _, err := tx.Exec("DELETE FROM structured_data WHERE url = ?", url); err != nil {
+		return err
+	}
+	if _, err := tx.Exec("INSERT INTO structured_data (url, json_data) VALUES (?, ?)", url, jsonData); err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
+// SaveLinks replaces outbound links for a source URL.
+func (s *SQLiteStorage) SaveLinks(source string, links []types.Link) error {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	if _, err := tx.Exec("DELETE FROM links WHERE source_url = ?", source); err != nil {
+		return err
+	}
+	stmt, err := tx.Prepare(
+		"INSERT OR IGNORE INTO links (source_url, target_url, anchor_text) VALUES (?, ?, ?)",
+	)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+	for _, link := range links {
+		if link.TargetURL == "" {
+			continue
+		}
+		if _, err := stmt.Exec(source, link.TargetURL, link.AnchorText); err != nil {
+			return err
+		}
+	}
+	return tx.Commit()
 }
 
 // QueryPages queries pages with filters
