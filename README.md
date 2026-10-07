@@ -381,3 +381,7 @@ Contributions welcome! Please:
 ## Disclaimer
 
 This tool is provided for educational and authorized testing purposes only. The authors are not responsible for misuse. Always obtain permission before scraping websites and respect robots.txt.
+
+## Resume & bloom dedupe
+
+On crawl completion the frontier writes `data/seen.bloom`. `resume` loads it (soft-fail + rebuild log if corrupt) so previously seen URLs are not re-enqueued.

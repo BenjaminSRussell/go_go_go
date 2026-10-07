@@ -205,6 +205,12 @@ func Resume(dataDir string) (*Crawler, error) {
 		return nil, fmt.Errorf("failed to load pending URLs: %w", err)
 	}
 	c.frontier = NewFrontier()
+	bloomPath := fmt.Sprintf("%s/seen.bloom", dataDir)
+	if err := c.frontier.LoadBloom(bloomPath); err != nil {
+		// Soft-fail: corrupt/missing bloom → rebuild from pending enqueue below
+		fmt.Printf("[bloom] load %s: %v — rebuilding fresh filter\n", bloomPath, err)
+		c.frontier = NewFrontier()
+	}
 	for _, item := range urls {
 		c.frontier.Add(item)
 	}
@@ -284,6 +290,13 @@ func (c *Crawler) Crawl() (*types.Results, error) {
 	}
 
 	c.printFinalStats(results)
+
+	bloomPath := fmt.Sprintf("%s/seen.bloom", c.config.DataDir)
+	if err := c.frontier.SaveBloom(bloomPath); err != nil {
+		fmt.Printf("[bloom] save failed: %v\n", err)
+	} else {
+		fmt.Printf("[bloom] saved %s\n", bloomPath)
+	}
 
 	return results, nil
 }

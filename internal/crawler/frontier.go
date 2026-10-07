@@ -1,7 +1,10 @@
 package crawler
 
 import (
+	"fmt"
+	"io"
 	"net/url"
+	"os"
 	"sync"
 	"time"
 
@@ -163,4 +166,42 @@ func (f *Frontier) Size() int {
 		total += len(queue.urls)
 	}
 	return total
+}
+
+
+// SaveBloom persists the seen-filter to path (data/seen.bloom).
+func (f *Frontier) SaveBloom(path string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.seen == nil {
+		return fmt.Errorf("bloom filter not initialized")
+	}
+	out, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+	_, err = f.seen.WriteTo(out)
+	return err
+}
+
+// LoadBloom loads a previously saved filter. Corrupt files fail soft: caller
+// should log and continue with a fresh filter.
+func (f *Frontier) LoadBloom(path string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	in, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+	var loaded bloom.BloomFilter
+	if _, err := loaded.ReadFrom(in); err != nil {
+		if err == io.EOF {
+			return fmt.Errorf("corrupt bloom file: empty")
+		}
+		return fmt.Errorf("corrupt bloom file: %w", err)
+	}
+	f.seen = &loaded
+	return nil
 }
