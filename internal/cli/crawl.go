@@ -21,6 +21,9 @@ var (
 
 	// Advanced features
 	enableJSRendering bool
+	jsMaxTabs         int
+	jsIdleTimeout     time.Duration
+	chromeFlags       []string
 	enableSQLite      bool
 	useHeaderRotation bool
 	maxRetries        int
@@ -52,6 +55,9 @@ var crawlCmd = &cobra.Command{
 
 			// Advanced features
 			EnableJSRendering: enableJSRendering,
+			JSMaxTabs:         jsMaxTabs,
+			JSIdleTimeout:     jsIdleTimeout,
+			ChromeFlags:       chromeFlags,
 			EnableSQLite:      enableSQLite,
 			UseHeaderRotation: useHeaderRotation,
 			MaxRetries:        maxRetries,
@@ -97,6 +103,9 @@ func init() {
 
 	// Advanced features
 	crawlCmd.Flags().BoolVar(&enableJSRendering, "enable-js-rendering", false, "Enable JavaScript rendering with headless Chrome")
+	crawlCmd.Flags().IntVar(&jsMaxTabs, "js-max-tabs", 4, "Maximum concurrent headless Chrome tabs")
+	crawlCmd.Flags().DurationVar(&jsIdleTimeout, "js-idle-timeout", 60*time.Second, "Shut Chrome down after this long without renders")
+	crawlCmd.Flags().StringSliceVar(&chromeFlags, "chrome-flag", nil, "Extra Chrome switch (repeatable), e.g. --chrome-flag=window-size=1280,800")
 	crawlCmd.Flags().BoolVar(&enableSQLite, "enable-sqlite", false, "Use SQLite for queryable storage instead of JSONL")
 	crawlCmd.Flags().BoolVar(&useHeaderRotation, "use-header-rotation", true, "Rotate browser headers")
 	crawlCmd.Flags().IntVar(&maxRetries, "max-retries", 3, "Maximum retry attempts per URL")

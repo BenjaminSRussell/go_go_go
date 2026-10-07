@@ -139,14 +139,19 @@ func New(config types.Config) (*Crawler, error) {
 
 	// JavaScript rendering
 	if config.EnableJSRendering {
-		chromeRenderer, err := renderer.NewChromeRenderer()
+		rcfg := renderer.DefaultConfig()
+		rcfg.MaxTabs = config.JSMaxTabs
+		rcfg.IdleTimeout = config.JSIdleTimeout
+		rcfg.ExtraFlags = config.ChromeFlags
+		chromeRenderer, err := renderer.NewChromeRendererWithConfig(rcfg)
 		if err != nil {
 			fmt.Printf("Warning: failed to initialize Chrome renderer: %v\n", err)
 			fmt.Println("Continuing without JavaScript rendering...")
 			c.enableJSRendering = false
 		} else {
 			c.chromeRenderer = chromeRenderer
-			fmt.Println("JavaScript rendering enabled")
+			eff := chromeRenderer.Config()
+			fmt.Printf("JavaScript rendering enabled (max tabs %d, idle timeout %s)\n", eff.MaxTabs, eff.IdleTimeout)
 		}
 	}
 
@@ -731,6 +736,9 @@ func (c *Crawler) Close() error {
 		c.cancel()
 	}
 	if c.chromeRenderer != nil {
+		s := c.chromeRenderer.Stats()
+		fmt.Printf("JS renders: %d (failures %d), Chrome launches %d, idle shutdowns %d\n",
+			s.Renders, s.Failures, s.BrowserStart, s.IdleStops)
 		c.chromeRenderer.Close()
 	}
 	if c.sqliteStorage != nil {
