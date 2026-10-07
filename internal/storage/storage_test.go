@@ -171,3 +171,50 @@ func TestStorageSQLiteSavePage(t *testing.T) {
 		t.Fatalf("upsert failed: %+v", pages[0])
 	}
 }
+
+func TestSaveMetaTagsReplacesOnRecrawl(t *testing.T) {
+	tmpFile := t.TempDir() + "/meta.db"
+	store, err := NewSQLiteStorage(tmpFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close()
+
+	_ = store.SavePage(types.PageResult{URL: "https://ex.com", CrawledAt: time.Now()})
+	if err := store.SaveMetaTags("https://ex.com", map[string]string{"a": "1"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.SaveMetaTags("https://ex.com", map[string]string{"a": "2", "b": "3"}); err != nil {
+		t.Fatal(err)
+	}
+	var n int
+	if err := store.db.QueryRow("SELECT COUNT(*) FROM meta_tags WHERE url = ?", "https://ex.com").Scan(&n); err != nil {
+		t.Fatal(err)
+	}
+	if n != 2 {
+		t.Fatalf("expected 2 meta rows after replace, got %d", n)
+	}
+}
+
+func TestSaveLinksReplacesBySource(t *testing.T) {
+	tmpFile := t.TempDir() + "/links.db"
+	store, err := NewSQLiteStorage(tmpFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close()
+	_ = store.SavePage(types.PageResult{URL: "https://ex.com", CrawledAt: time.Now()})
+	if err := store.SaveLinks("https://ex.com", []types.Link{{TargetURL: "https://a", AnchorText: "A"}}); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.SaveLinks("https://ex.com", []types.Link{{TargetURL: "https://b", AnchorText: "B"}, {TargetURL: "https://c"}}); err != nil {
+		t.Fatal(err)
+	}
+	var n int
+	if err := store.db.QueryRow("SELECT COUNT(*) FROM links WHERE source_url = ?", "https://ex.com").Scan(&n); err != nil {
+		t.Fatal(err)
+	}
+	if n != 2 {
+		t.Fatalf("expected 2 links, got %d", n)
+	}
+}

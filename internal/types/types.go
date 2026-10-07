@@ -60,3 +60,10 @@ type PageResult struct {
 	ImageCount       int       `json:"image_count,omitempty"`
 	ScriptCount      int       `json:"script_count,omitempty"`
 }
+
+
+// Link is an outbound hyperlink from a crawled page.
+type Link struct {
+	TargetURL  string `json:"target_url"`
+	AnchorText string `json:"anchor_text,omitempty"`
+}
