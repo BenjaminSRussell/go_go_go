@@ -84,10 +84,25 @@ func NewSQLiteStorage(dbPath string) (*SQLiteStorage, error) {
 
 // SavePage saves a page result to SQLite
 func (s *SQLiteStorage) SavePage(result types.PageResult) error {
+	// UPSERT so recrawls refresh meta columns without wiping unspecified fields
+	// the way INSERT OR REPLACE can when the column list is incomplete.
 	query := `
-		INSERT OR REPLACE INTO pages
-		(url, depth, status_code, content_length, title, link_count, crawled_at, error)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+		INSERT INTO pages
+		(url, depth, status_code, content_length, title, link_count, crawled_at, error,
+		 meta_description, meta_keywords, image_count, script_count)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		ON CONFLICT(url) DO UPDATE SET
+			depth = excluded.depth,
+			status_code = excluded.status_code,
+			content_length = excluded.content_length,
+			title = excluded.title,
+			link_count = excluded.link_count,
+			crawled_at = excluded.crawled_at,
+			error = excluded.error,
+			meta_description = excluded.meta_description,
+			meta_keywords = excluded.meta_keywords,
+			image_count = excluded.image_count,
+			script_count = excluded.script_count
 	`
 
 	_, err := s.db.Exec(query,
@@ -99,6 +114,10 @@ func (s *SQLiteStorage) SavePage(result types.PageResult) error {
 		result.LinkCount,
 		result.CrawledAt,
 		result.Error,
+		result.MetaDescription,
+		result.MetaKeywords,
+		result.ImageCount,
+		result.ScriptCount,
 	)
 
 	return err
@@ -136,7 +155,7 @@ func (s *SQLiteStorage) SaveStructuredData(url, jsonData string) error {
 
 // QueryPages queries pages with filters
 func (s *SQLiteStorage) QueryPages(filters map[string]interface{}) ([]types.PageResult, error) {
-	query := "SELECT url, depth, status_code, content_length, title, link_count, crawled_at, error FROM pages WHERE 1=1"
+	query := "SELECT url, depth, status_code, content_length, title, link_count, crawled_at, error, meta_description, meta_keywords, image_count, script_count FROM pages WHERE 1=1"
 	args := make([]interface{}, 0)
 
 	if statusCode, ok := filters["status_code"]; ok {
@@ -159,6 +178,8 @@ func (s *SQLiteStorage) QueryPages(filters map[string]interface{}) ([]types.Page
 	for rows.Next() {
 		var result types.PageResult
 		var crawledAt string
+		var metaDesc, metaKw sql.NullString
+		var imgCount, scriptCount sql.NullInt64
 		err := rows.Scan(
 			&result.URL,
 			&result.Depth,
@@ -168,7 +189,23 @@ func (s *SQLiteStorage) QueryPages(filters map[string]interface{}) ([]types.Page
 			&result.LinkCount,
 			&crawledAt,
 			&result.Error,
+			&metaDesc,
+			&metaKw,
+			&imgCount,
+			&scriptCount,
 		)
+		if metaDesc.Valid {
+			result.MetaDescription = metaDesc.String
+		}
+		if metaKw.Valid {
+			result.MetaKeywords = metaKw.String
+		}
+		if imgCount.Valid {
+			result.ImageCount = int(imgCount.Int64)
+		}
+		if scriptCount.Valid {
+			result.ScriptCount = int(scriptCount.Int64)
+		}
 		if err != nil {
 			continue
 		}

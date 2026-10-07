@@ -123,15 +123,51 @@ func TestStorageSQLiteSavePage(t *testing.T) {
 	defer store.Close()
 
 	result := types.PageResult{
-		URL:           "https://example.com",
-		StatusCode:    200,
-		ContentLength: 1024,
-		LinkCount:     5,
-		CrawledAt:     time.Now(),
+		URL:             "https://example.com",
+		StatusCode:      200,
+		ContentLength:   1024,
+		LinkCount:       5,
+		CrawledAt:       time.Now(),
+		MetaDescription: "A sample page",
+		MetaKeywords:    "a,b,c",
+		ImageCount:      3,
+		ScriptCount:     2,
 	}
 
 	err = store.SavePage(result)
 	if err != nil {
-		t.Errorf("Failed to save page: %v", err)
+		t.Fatalf("Failed to save page: %v", err)
+	}
+
+	pages, err := store.QueryPages(map[string]interface{}{})
+	if err != nil {
+		t.Fatalf("QueryPages: %v", err)
+	}
+	if len(pages) != 1 {
+		t.Fatalf("expected 1 page, got %d", len(pages))
+	}
+	got := pages[0]
+	if got.MetaDescription != "A sample page" {
+		t.Fatalf("meta_description=%q", got.MetaDescription)
+	}
+	if got.MetaKeywords != "a,b,c" {
+		t.Fatalf("meta_keywords=%q", got.MetaKeywords)
+	}
+	if got.ImageCount != 3 || got.ScriptCount != 2 {
+		t.Fatalf("counts image=%d script=%d", got.ImageCount, got.ScriptCount)
+	}
+
+	// Recrawl updates rather than wiping
+	result.MetaDescription = "Updated"
+	result.ImageCount = 9
+	if err := store.SavePage(result); err != nil {
+		t.Fatalf("resave: %v", err)
+	}
+	pages, err = store.QueryPages(map[string]interface{}{})
+	if err != nil {
+		t.Fatalf("QueryPages2: %v", err)
+	}
+	if pages[0].MetaDescription != "Updated" || pages[0].ImageCount != 9 {
+		t.Fatalf("upsert failed: %+v", pages[0])
 	}
 }

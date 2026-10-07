@@ -47,12 +47,16 @@ type URLItem struct {
 
 // PageResult contains information about a crawled page
 type PageResult struct {
-	URL           string    `json:"url"`
-	Depth         int       `json:"depth"`
-	StatusCode    int       `json:"status_code"`
-	ContentLength int64     `json:"content_length"`
-	Title         string    `json:"title"`
-	LinkCount     int       `json:"link_count"`
-	CrawledAt     time.Time `json:"crawled_at"`
-	Error         string    `json:"error,omitempty"`
+	URL              string    `json:"url"`
+	Depth            int       `json:"depth"`
+	StatusCode       int       `json:"status_code"`
+	ContentLength    int64     `json:"content_length"`
+	Title            string    `json:"title"`
+	LinkCount        int       `json:"link_count"`
+	CrawledAt        time.Time `json:"crawled_at"`
+	Error            string    `json:"error,omitempty"`
+	MetaDescription  string    `json:"meta_description,omitempty"`
+	MetaKeywords     string    `json:"meta_keywords,omitempty"`
+	ImageCount       int       `json:"image_count,omitempty"`
+	ScriptCount      int       `json:"script_count,omitempty"`
 }
