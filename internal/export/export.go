@@ -4,6 +4,7 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"os"
 	"time"
 
@@ -118,17 +119,28 @@ func (e *Exporter) ExportSitemap(results []types.PageResult, outputFile string) 
 	return nil
 }
 
+func escapeXML(s string) string {
+	replacer := strings.NewReplacer(
+		"&", "&amp;",
+		"<", "&lt;",
+		">", "&gt;",
+		"\"", "&quot;",
+		"'", "&apos;",
+	)
+	return replacer.Replace(s)
+}
+
 func marshalXML(urlSet URLSet) (string, error) {
 	var result string
 	result += "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n"
 	for _, url := range urlSet.URLs {
 		result += "  <url>\n"
-		result += fmt.Sprintf("    <loc>%s</loc>\n", url.Loc)
+		result += fmt.Sprintf("    <loc>%s</loc>\n", escapeXML(url.Loc))
 		if url.Lastmod != "" {
-			result += fmt.Sprintf("    <lastmod>%s</lastmod>\n", url.Lastmod)
+			result += fmt.Sprintf("    <lastmod>%s</lastmod>\n", escapeXML(url.Lastmod))
 		}
 		if url.Changefreq != "" {
-			result += fmt.Sprintf("    <changefreq>%s</changefreq>\n", url.Changefreq)
+			result += fmt.Sprintf("    <changefreq>%s</changefreq>\n", escapeXML(url.Changefreq))
 		}
 		if url.Priority > 0 {
 			result += fmt.Sprintf("    <priority>%.1f</priority>\n", url.Priority)

@@ -3,6 +3,7 @@ package export
 import (
 	"encoding/csv"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -137,7 +138,6 @@ func TestExporterExportEmpty(t *testing.T) {
 		t.Logf("Expected to handle empty results: %v", err)
 	}
 }
-
 func TestExporterExportCSVIncludesTitleAndError(t *testing.T) {
 	tmpDir := t.TempDir()
 	exporter, err := NewExporter(tmpDir)
@@ -200,5 +200,20 @@ func TestExporterExportCSVIncludesTitleAndError(t *testing.T) {
 	}
 	if rows[2][6] != "connection refused" {
 		t.Fatalf("error=%q", rows[2][6])
+	}
+}
+
+func TestMarshalXMLEscapesAmpersandInLoc(t *testing.T) {
+	out, err := marshalXML(URLSet{URLs: []URL{{
+		Loc: "https://example.com/search?q=a&b=1",
+	}}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "https://example.com/search?q=a&amp;b=1") {
+		t.Fatalf("expected escaped amp in loc, got: %s", out)
+	}
+	if strings.Contains(out, "q=a&b=1") {
+		t.Fatalf("raw ampersand still present: %s", out)
 	}
 }
