@@ -2,6 +2,8 @@ package crawler
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"net/http"
@@ -173,7 +175,7 @@ func New(config types.Config) (*Crawler, error) {
 		}
 	}
 
-	c.frontier.Add(types.URLItem{URL: config.StartURL, Depth: 0})
+	c.enqueue(types.URLItem{URL: config.StartURL, Depth: 0})
 
 	if err := c.runSeeding(); err != nil {
 		return nil, fmt.Errorf("seeding failed: %w", err)
@@ -226,7 +228,42 @@ func Resume(dataDir string) (*Crawler, error) {
 		c.frontier.Add(item)
 	}
 
+	// With --enable-sqlite the frontier is persisted in crawl.db (#3):
+	// requeue pending URLs (bypassing the bloom filter, which already marked
+	// them seen) and mark completed pages seen so they are never refetched.
+	if c.sqliteStorage != nil {
+		completed, err := c.sqliteStorage.CompletedURLs()
+		if err != nil {
+			return nil, fmt.Errorf("failed to load completed URLs: %w", err)
+		}
+		for _, u := range completed {
+			c.frontier.MarkSeen(u)
+		}
+		pending, err := c.sqliteStorage.LoadPending()
+		if err != nil {
+			return nil, fmt.Errorf("failed to load pending URLs from SQLite: %w", err)
+		}
+		for _, item := range pending {
+			c.frontier.Requeue(item)
+		}
+		fmt.Printf("Resume from SQLite: %d completed, %d pending\n", len(completed), len(pending))
+	}
+
 	return c, nil
+}
+
+// enqueue adds item to the frontier and, with SQLite enabled, persists it as
+// pending work so an interrupted crawl can resume. Returns true if newly added.
+func (c *Crawler) enqueue(item types.URLItem) bool {
+	if !c.frontier.Add(item) {
+		return false
+	}
+	if c.enableSQLite && c.sqliteStorage != nil {
+		if err := c.sqliteStorage.EnqueuePending(item); err != nil {
+			fmt.Printf("[sqlite] enqueue %s: %v\n", item.URL, err)
+		}
+	}
+	return true
 }
 
 // Crawl starts crawling
@@ -452,6 +489,8 @@ func (c *Crawler) processURL(item types.URLItem) {
 	}
 
 	result.ContentLength = int64(len(body))
+	sum := sha256.Sum256(body)
+	result.ContentHash = hex.EncodeToString(sum[:])
 	htmlContent := string(body)
 
 	// JavaScript rendering if needed
@@ -491,6 +530,15 @@ func (c *Crawler) processURL(item types.URLItem) {
 	}
 
 	result.LinkCount = len(links)
+	if c.enableSQLite && c.sqliteStorage != nil && len(links) > 0 {
+		edges := make([]types.Link, 0, len(links))
+		for _, l := range links {
+			edges = append(edges, types.Link{TargetURL: l})
+		}
+		if err := c.sqliteStorage.SaveLinks(item.URL, edges); err != nil {
+			fmt.Printf("[sqlite] save links for %s: %v\n", item.URL, err)
+		}
+	}
 
 	for _, link := range links {
 		nextDepth := item.Depth + 1
@@ -498,12 +546,13 @@ func (c *Crawler) processURL(item types.URLItem) {
 			continue
 		}
 		if c.shouldCrawl(link, item.URL) {
-			c.frontier.Add(types.URLItem{
+			if c.enqueue(types.URLItem{
 				URL:       link,
 				Depth:     nextDepth,
 				ParentURL: item.URL,
-			})
-			c.discovered.Add(1)
+			}) {
+				c.discovered.Add(1)
+			}
 		}
 	}
 
@@ -545,7 +594,11 @@ func (c *Crawler) saveResult(result types.PageResult) {
 	c.storage.SaveResult(result)
 
 	if c.enableSQLite && c.sqliteStorage != nil {
-		c.sqliteStorage.SavePage(result)
+		if err := c.sqliteStorage.SavePage(result); err != nil {
+			fmt.Printf("[sqlite] save page %s: %v\n", result.URL, err)
+		} else if err := c.sqliteStorage.MarkDone(result.URL); err != nil {
+			fmt.Printf("[sqlite] mark done %s: %v\n", result.URL, err)
+		}
 	}
 }
 
@@ -686,7 +739,7 @@ func (c *Crawler) runSeeding() error {
 
 		added := 0
 		for _, url := range urls {
-			if c.frontier.Add(types.URLItem{URL: url, Depth: 0}) {
+			if c.enqueue(types.URLItem{URL: url, Depth: 0}) {
 				added++
 			}
 		}

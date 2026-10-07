@@ -21,7 +21,9 @@ type SQLiteStorage struct {
 
 // NewSQLiteStorage creates a new SQLite storage instance
 func NewSQLiteStorage(dbPath string) (*SQLiteStorage, error) {
-	db, err := sql.Open("sqlite3", dbPath)
+	// WAL + busy timeout: crawler workers write concurrently (pages, links,
+	// frontier); without these go-sqlite3 returns "database is locked".
+	db, err := sql.Open("sqlite3", dbPath+"?_busy_timeout=5000&_journal_mode=WAL")
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
@@ -41,7 +43,8 @@ func NewSQLiteStorage(dbPath string) (*SQLiteStorage, error) {
 		meta_description TEXT,
 		meta_keywords TEXT,
 		image_count INTEGER,
-		script_count INTEGER
+		script_count INTEGER,
+		content_hash TEXT
 	);
 
 	CREATE INDEX IF NOT EXISTS idx_url ON pages(url);
@@ -60,6 +63,14 @@ func NewSQLiteStorage(dbPath string) (*SQLiteStorage, error) {
 
 	CREATE INDEX IF NOT EXISTS idx_source_url ON links(source_url);
 	CREATE INDEX IF NOT EXISTS idx_target_url ON links(target_url);
+
+	-- Pending crawl work for resume (#3): a row is inserted when a URL is
+	-- enqueued and deleted once its result is saved to pages.
+	CREATE TABLE IF NOT EXISTS frontier (
+		url TEXT PRIMARY KEY,
+		depth INTEGER NOT NULL,
+		parent_url TEXT
+	);
 
 	CREATE TABLE IF NOT EXISTS meta_tags (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -83,6 +94,14 @@ func NewSQLiteStorage(dbPath string) (*SQLiteStorage, error) {
 
 	if _, err := db.Exec(schema); err != nil {
 		return nil, fmt.Errorf("failed to create schema: %w", err)
+	}
+
+	// Databases created before content_hash existed (#3).
+	if err := addColumnIfMissing(db, "pages", "content_hash", "TEXT"); err != nil {
+		return nil, fmt.Errorf("failed to migrate schema: %w", err)
+	}
+	if _, err := db.Exec("CREATE INDEX IF NOT EXISTS idx_content_hash ON pages(content_hash)"); err != nil {
+		return nil, fmt.Errorf("failed to create content_hash index: %w", err)
 	}
 
 	store := &SQLiteStorage{db: db}
@@ -218,8 +237,8 @@ func (s *SQLiteStorage) SavePage(result types.PageResult) error {
 	query := `
 		INSERT INTO pages
 		(url, depth, status_code, content_length, title, link_count, crawled_at, error,
-		 meta_description, meta_keywords, image_count, script_count)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		 meta_description, meta_keywords, image_count, script_count, content_hash)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(url) DO UPDATE SET
 			depth = excluded.depth,
 			status_code = excluded.status_code,
@@ -231,7 +250,8 @@ func (s *SQLiteStorage) SavePage(result types.PageResult) error {
 			meta_description = excluded.meta_description,
 			meta_keywords = excluded.meta_keywords,
 			image_count = excluded.image_count,
-			script_count = excluded.script_count
+			script_count = excluded.script_count,
+			content_hash = excluded.content_hash
 	`
 
 	_, err := s.db.Exec(query,
@@ -247,9 +267,127 @@ func (s *SQLiteStorage) SavePage(result types.PageResult) error {
 		result.MetaKeywords,
 		result.ImageCount,
 		result.ScriptCount,
+		nullIfEmpty(result.ContentHash),
 	)
 
 	return err
+}
+
+func nullIfEmpty(s string) interface{} {
+	if s == "" {
+		return nil
+	}
+	return s
+}
+
+// addColumnIfMissing runs ALTER TABLE ADD COLUMN when table lacks column.
+func addColumnIfMissing(db *sql.DB, table, column, decl string) error {
+	rows, err := db.Query(fmt.Sprintf("PRAGMA table_info(%s)", table))
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var (
+			cid       int
+			name, typ string
+			notNull   int
+			dflt      sql.NullString
+			pk        int
+		)
+		if err := rows.Scan(&cid, &name, &typ, &notNull, &dflt, &pk); err != nil {
+			return err
+		}
+		if name == column {
+			return nil
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return err
+	}
+	_, err = db.Exec(fmt.Sprintf("ALTER TABLE %s ADD COLUMN %s %s", table, column, decl))
+	return err
+}
+
+// EnqueuePending records a URL as pending crawl work (for resume).
+func (s *SQLiteStorage) EnqueuePending(item types.URLItem) error {
+	_, err := s.db.Exec(
+		"INSERT OR IGNORE INTO frontier (url, depth, parent_url) VALUES (?, ?, ?)",
+		item.URL, item.Depth, nullIfEmpty(item.ParentURL),
+	)
+	return err
+}
+
+// MarkDone removes a URL from the pending frontier once its result is saved.
+func (s *SQLiteStorage) MarkDone(url string) error {
+	_, err := s.db.Exec("DELETE FROM frontier WHERE url = ?", url)
+	return err
+}
+
+// LoadPending returns frontier URLs that have no saved page yet, i.e. work a
+// resumed crawl still has to do. Completed URLs are skipped.
+func (s *SQLiteStorage) LoadPending() ([]types.URLItem, error) {
+	rows, err := s.db.Query(`
+		SELECT f.url, f.depth, COALESCE(f.parent_url, '')
+		FROM frontier f
+		WHERE NOT EXISTS (SELECT 1 FROM pages p WHERE p.url = f.url)
+		ORDER BY f.depth, f.rowid`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []types.URLItem
+	for rows.Next() {
+		var it types.URLItem
+		if err := rows.Scan(&it.URL, &it.Depth, &it.ParentURL); err != nil {
+			return nil, err
+		}
+		items = append(items, it)
+	}
+	return items, rows.Err()
+}
+
+// CompletedURLs returns every URL that already has a saved page.
+func (s *SQLiteStorage) CompletedURLs() ([]string, error) {
+	rows, err := s.db.Query("SELECT url FROM pages")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var urls []string
+	for rows.Next() {
+		var u string
+		if err := rows.Scan(&u); err != nil {
+			return nil, err
+		}
+		urls = append(urls, u)
+	}
+	return urls, rows.Err()
+}
+
+// LinkRow is one edge of the crawl link graph.
+type LinkRow struct {
+	SourceURL  string
+	TargetURL  string
+	AnchorText string
+}
+
+// AllLinks returns the full link graph.
+func (s *SQLiteStorage) AllLinks() ([]LinkRow, error) {
+	rows, err := s.db.Query("SELECT source_url, target_url, COALESCE(anchor_text, '') FROM links ORDER BY id")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []LinkRow
+	for rows.Next() {
+		var l LinkRow
+		if err := rows.Scan(&l.SourceURL, &l.TargetURL, &l.AnchorText); err != nil {
+			return nil, err
+		}
+		out = append(out, l)
+	}
+	return out, rows.Err()
 }
 
 // SaveMetaTags saves meta tags for a URL
@@ -325,7 +463,7 @@ func (s *SQLiteStorage) SaveLinks(source string, links []types.Link) error {
 
 // QueryPages queries pages with filters
 func (s *SQLiteStorage) QueryPages(filters map[string]interface{}) ([]types.PageResult, error) {
-	query := "SELECT url, depth, status_code, content_length, title, link_count, crawled_at, error, meta_description, meta_keywords, image_count, script_count FROM pages WHERE 1=1"
+	query := "SELECT url, depth, status_code, content_length, title, link_count, crawled_at, error, meta_description, meta_keywords, image_count, script_count, content_hash FROM pages WHERE 1=1"
 	args := make([]interface{}, 0)
 
 	if statusCode, ok := filters["status_code"]; ok {
@@ -348,7 +486,7 @@ func (s *SQLiteStorage) QueryPages(filters map[string]interface{}) ([]types.Page
 	for rows.Next() {
 		var result types.PageResult
 		var crawledAt string
-		var metaDesc, metaKw sql.NullString
+		var metaDesc, metaKw, contentHash sql.NullString
 		var imgCount, scriptCount sql.NullInt64
 		err := rows.Scan(
 			&result.URL,
@@ -363,7 +501,9 @@ func (s *SQLiteStorage) QueryPages(filters map[string]interface{}) ([]types.Page
 			&metaKw,
 			&imgCount,
 			&scriptCount,
+			&contentHash,
 		)
+		result.ContentHash = contentHash.String
 		if metaDesc.Valid {
 			result.MetaDescription = metaDesc.String
 		}

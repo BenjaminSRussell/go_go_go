@@ -63,7 +63,26 @@ func (f *Frontier) Add(item types.URLItem) bool {
 	if f.seen.Test(urlBytes) {
 		return false
 	}
+	return f.enqueueLocked(item)
+}
 
+// Requeue enqueues a URL even if the bloom filter has seen it. Resume uses it
+// for persisted pending URLs, which were marked seen when first discovered.
+func (f *Frontier) Requeue(item types.URLItem) bool {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.enqueueLocked(item)
+}
+
+// MarkSeen records a URL in the dedupe filter without enqueueing it.
+func (f *Frontier) MarkSeen(rawURL string) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.seen.Add([]byte(rawURL))
+}
+
+func (f *Frontier) enqueueLocked(item types.URLItem) bool {
+	urlBytes := []byte(item.URL)
 	f.seen.Add(urlBytes)
 	f.discovered++
 
@@ -167,7 +186,6 @@ func (f *Frontier) Size() int {
 	}
 	return total
 }
-
 
 // SaveBloom persists the seen-filter to path (data/seen.bloom).
 func (f *Frontier) SaveBloom(path string) error {
