@@ -47,7 +47,7 @@ func (e *Exporter) ExportCSV(results []types.PageResult, outputFile string) erro
 	writer := csv.NewWriter(file)
 	defer writer.Flush()
 
-	headers := []string{"URL", "StatusCode", "ContentLength", "LinkCount", "CrawledAt"}
+	headers := []string{"URL", "StatusCode", "ContentLength", "LinkCount", "CrawledAt", "Title", "Error"}
 	if err := writer.Write(headers); err != nil {
 		return fmt.Errorf("failed to write CSV headers: %w", err)
 	}
@@ -59,6 +59,8 @@ func (e *Exporter) ExportCSV(results []types.PageResult, outputFile string) erro
 			fmt.Sprintf("%d", result.ContentLength),
 			fmt.Sprintf("%d", result.LinkCount),
 			result.CrawledAt.Format(time.RFC3339),
+			result.Title,
+			result.Error,
 		}
 		if err := writer.Write(record); err != nil {
 			return fmt.Errorf("failed to write CSV record: %w", err)
