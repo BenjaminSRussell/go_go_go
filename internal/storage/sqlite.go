@@ -3,6 +3,7 @@ package storage
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/BenjaminSRussell/go_go_go/internal/types"
@@ -12,6 +13,10 @@ import (
 // SQLiteStorage provides SQLite-based storage for queryable data
 type SQLiteStorage struct {
 	db *sql.DB
+	// fts is true when the FTS5 index is available. mattn/go-sqlite3 only
+	// compiles FTS5 in with `-tags sqlite_fts5`; without it Search falls back
+	// to a weighted LIKE scan (#8).
+	fts bool
 }
 
 // NewSQLiteStorage creates a new SQLite storage instance
@@ -80,7 +85,130 @@ func NewSQLiteStorage(dbPath string) (*SQLiteStorage, error) {
 		return nil, fmt.Errorf("failed to create schema: %w", err)
 	}
 
-	return &SQLiteStorage{db: db}, nil
+	store := &SQLiteStorage{db: db}
+	store.fts = store.ensureFTS() == nil
+	return store, nil
+}
+
+const ftsSchema = `
+	CREATE VIRTUAL TABLE pages_fts USING fts5(
+		url UNINDEXED, title, meta_description, meta_keywords,
+		content='pages', content_rowid='id'
+	);
+	CREATE TRIGGER IF NOT EXISTS pages_fts_ai AFTER INSERT ON pages BEGIN
+		INSERT INTO pages_fts(rowid, url, title, meta_description, meta_keywords)
+		VALUES (new.id, new.url, new.title, new.meta_description, new.meta_keywords);
+	END;
+	CREATE TRIGGER IF NOT EXISTS pages_fts_ad AFTER DELETE ON pages BEGIN
+		INSERT INTO pages_fts(pages_fts, rowid, url, title, meta_description, meta_keywords)
+		VALUES ('delete', old.id, old.url, old.title, old.meta_description, old.meta_keywords);
+	END;
+	CREATE TRIGGER IF NOT EXISTS pages_fts_au AFTER UPDATE ON pages BEGIN
+		INSERT INTO pages_fts(pages_fts, rowid, url, title, meta_description, meta_keywords)
+		VALUES ('delete', old.id, old.url, old.title, old.meta_description, old.meta_keywords);
+		INSERT INTO pages_fts(rowid, url, title, meta_description, meta_keywords)
+		VALUES (new.id, new.url, new.title, new.meta_description, new.meta_keywords);
+	END;
+	INSERT INTO pages_fts(pages_fts) VALUES ('rebuild');
+`
+
+// ensureFTS creates the FTS5 index and its sync triggers, backfilling rows
+// already in pages. Returns an error when FTS5 is not compiled in.
+func (s *SQLiteStorage) ensureFTS() error {
+	var name string
+	err := s.db.QueryRow(`SELECT name FROM sqlite_master WHERE type='table' AND name='pages_fts'`).Scan(&name)
+	if err == nil {
+		return nil // already created (and kept in sync by triggers)
+	}
+	if err != sql.ErrNoRows {
+		return err
+	}
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+	if _, err := tx.Exec(ftsSchema); err != nil {
+		_ = tx.Rollback()
+		return err
+	}
+	return tx.Commit()
+}
+
+// FTSEnabled reports whether ranked FTS5 search is available.
+func (s *SQLiteStorage) FTSEnabled() bool { return s.fts }
+
+// SearchResult is one ranked hit from Search.
+type SearchResult struct {
+	URL             string
+	Title           string
+	MetaDescription string
+	Score           float64 // higher is better
+}
+
+// Search finds pages whose title / meta description / keywords match query,
+// best matches first. Uses FTS5 (bm25) when available, else a weighted LIKE.
+func (s *SQLiteStorage) Search(query string, limit int) ([]SearchResult, error) {
+	query = strings.TrimSpace(query)
+	if query == "" {
+		return nil, nil
+	}
+	if limit <= 0 {
+		limit = 20
+	}
+	if s.fts {
+		return s.searchFTS(query, limit)
+	}
+	return s.searchLike(query, limit)
+}
+
+func (s *SQLiteStorage) searchFTS(query string, limit int) ([]SearchResult, error) {
+	// Quote each term so user input like "c++" or "a:b" is not parsed as
+	// FTS5 query syntax; terms are implicitly ANDed.
+	terms := strings.Fields(query)
+	for i, t := range terms {
+		terms[i] = `"` + strings.ReplaceAll(t, `"`, `""`) + `"`
+	}
+	rows, err := s.db.Query(`
+		SELECT p.url, COALESCE(p.title, ''), COALESCE(p.meta_description, ''),
+		       -bm25(pages_fts, 0.0, 10.0, 3.0, 1.0) AS score
+		FROM pages_fts JOIN pages p ON p.id = pages_fts.rowid
+		WHERE pages_fts MATCH ?
+		ORDER BY score DESC
+		LIMIT ?`, strings.Join(terms, " "), limit)
+	if err != nil {
+		return nil, fmt.Errorf("fts search: %w", err)
+	}
+	return scanSearch(rows)
+}
+
+func (s *SQLiteStorage) searchLike(query string, limit int) ([]SearchResult, error) {
+	like := "%" + strings.ToLower(query) + "%"
+	rows, err := s.db.Query(`
+		SELECT url, COALESCE(title, ''), COALESCE(meta_description, ''),
+		       (CASE WHEN LOWER(COALESCE(title, '')) LIKE ?1 THEN 10 ELSE 0 END) +
+		       (CASE WHEN LOWER(COALESCE(meta_description, '')) LIKE ?1 THEN 3 ELSE 0 END) +
+		       (CASE WHEN LOWER(COALESCE(meta_keywords, '')) LIKE ?1 THEN 1 ELSE 0 END) AS score
+		FROM pages
+		WHERE score > 0
+		ORDER BY score DESC, url
+		LIMIT ?2`, like, limit)
+	if err != nil {
+		return nil, fmt.Errorf("search: %w", err)
+	}
+	return scanSearch(rows)
+}
+
+func scanSearch(rows *sql.Rows) ([]SearchResult, error) {
+	defer rows.Close()
+	var out []SearchResult
+	for rows.Next() {
+		var r SearchResult
+		if err := rows.Scan(&r.URL, &r.Title, &r.MetaDescription, &r.Score); err != nil {
+			return nil, err
+		}
+		out = append(out, r)
+	}
+	return out, rows.Err()
 }
 
 // SavePage saves a page result to SQLite

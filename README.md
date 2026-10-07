@@ -200,6 +200,23 @@ GROUP BY target_url ORDER BY count DESC LIMIT 10;
 SELECT url FROM meta_tags WHERE name = 'og:type' AND content = 'article';
 ```
 
+**Full-text search** (#8). `pages_fts` is an FTS5 index over `title`,
+`meta_description` and `meta_keywords`, kept in sync by triggers and backfilled
+when first created. FTS5 is compiled into `mattn/go-sqlite3` only with the
+`sqlite_fts5` build tag; without it `search` falls back to a weighted LIKE scan.
+
+```bash
+go build -tags sqlite_fts5 -o bin/gogogoscraper ./cmd/gogogoscraper
+./bin/gogogoscraper search "pricing page" --data-dir ./data --limit 10
+```
+
+```sql
+-- Ranked search directly in SQL (title weighted highest)
+SELECT p.url, p.title, -bm25(pages_fts, 0.0, 10.0, 3.0, 1.0) AS score
+FROM pages_fts JOIN pages p ON p.id = pages_fts.rowid
+WHERE pages_fts MATCH 'pricing' ORDER BY score DESC LIMIT 10;
+```
+
 ### 5. Intelligent Retry Logic
 
 **Automatic features** (no flag needed):
