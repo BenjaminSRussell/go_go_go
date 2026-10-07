@@ -98,6 +98,8 @@ Crawl dumps (`data/`, `test_crawl*`) and the compiled binary are gitignored — 
 | `--data-dir` | ./data | Storage location |
 | `--seeding-strategy` | all | URL discovery: none/sitemap/ct/commoncrawl/all |
 | `--ignore-robots` | false | Skip robots.txt (not recommended) |
+| `--user-agent` | GoGoGoBot/1.0 | UA sent on every request and matched against robots.txt groups; overrides header rotation/personas |
+| `--per-host-concurrency` | 2 | Max simultaneous requests to one host |
 | `--max-retries` | 3 | Maximum retry attempts per URL |
 
 ### Advanced Options
@@ -230,6 +232,23 @@ WHERE pages_fts MATCH 'pricing' ORDER BY score DESC LIMIT 10;
 - 5xx: Standard backoff
 - Network errors: Retry with backoff
 - 4xx (except 429): No retry
+
+## Polite Crawling
+
+By default the crawler behaves as a well-mannered bot:
+
+- **robots.txt**: fetched once per origin and cached. `Disallow` rules for our agent are honored; skipped URLs log `[robots] skip <url>: disallowed for <agent>`. A 404 or unreachable robots.txt means allow-all; a 5xx means disallow-all (RFC 9309).
+- **Crawl-Delay**: honored per host. Request *start times* to the same host are spaced by at least the delay, regardless of `--workers` or `--per-host-concurrency`.
+- **Per-host concurrency**: `--per-host-concurrency` (default 2) caps simultaneous requests to one host, so a large `--workers` pool spreads across hosts instead of hammering one.
+- **User-Agent**: `--user-agent "MyBot/1.0 (+https://example.com/bot)"` sets the identity sent on every request. The product token before `/` (`MyBot`) is what robots.txt groups are matched against. Header rotation and personas send browser UAs and are matched against the default `GoGoGoBot` token unless `--user-agent` is set.
+
+```bash
+./bin/gogogoscraper crawl --start-url https://example.com \
+  --user-agent "MyBot/1.0 (+https://example.com/bot)" \
+  --use-header-rotation=false --per-host-concurrency 1 --workers 16
+```
+
+`--ignore-robots` disables both robots.txt and Crawl-Delay handling; only use it on sites you are authorized to test.
 
 ## Seeding Strategies
 

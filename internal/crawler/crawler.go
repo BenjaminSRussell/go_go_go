@@ -32,6 +32,8 @@ type Crawler struct {
 	client   *http.Client
 
 	robotsCache sync.Map
+	hosts       *hostGovernor
+	agentToken  string
 
 	discovered atomic.Int64
 	processed  atomic.Int64
@@ -77,11 +79,11 @@ func New(config types.Config) (*Crawler, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	c := &Crawler{
-		config:            config,
-		frontier:          NewFrontier(),
-		metrics:           &scrapeMetrics{},
-		storage:           store,
-		client:            &http.Client{
+		config:   config,
+		frontier: NewFrontier(),
+		metrics:  &scrapeMetrics{},
+		storage:  store,
+		client: &http.Client{
 			Timeout: config.Timeout,
 			Transport: &http.Transport{
 				MaxIdleConns:        config.Workers * 2,
@@ -91,6 +93,8 @@ func New(config types.Config) (*Crawler, error) {
 			},
 		},
 		sem:               make(chan struct{}, config.Workers),
+		hosts:             newHostGovernor(config.PerHostConcurrency),
+		agentToken:        robotsAgentToken(config.UserAgent),
 		ctx:               ctx,
 		cancel:            cancel,
 		enablePersonas:    config.EnablePersonas,
@@ -347,16 +351,21 @@ func (c *Crawler) processURL(item types.URLItem) {
 		time.Sleep(currentPersona.GetThinkTime())
 	}
 
-	if !c.config.IgnoreRobots && !c.isAllowedByRobots(item.URL) {
-		result.Error = "blocked by robots.txt"
-		c.saveResult(result)
-		c.errors.Add(1)
-		return
+	var crawlDelay time.Duration
+	if !c.config.IgnoreRobots {
+		allowed, delay := c.robotsPolicy(item.URL)
+		if !allowed {
+			fmt.Printf("[robots] skip %s: disallowed for %s\n", item.URL, c.agentToken)
+			result.Error = "blocked by robots.txt"
+			c.saveResult(result)
+			c.errors.Add(1)
+			return
+		}
+		crawlDelay = delay
 	}
 
 	// Retry with exponential backoff
 	var resp *http.Response
-	var err error
 	maxRetries := c.config.MaxRetries
 	if maxRetries <= 0 {
 		maxRetries = 3
@@ -364,6 +373,16 @@ func (c *Crawler) processURL(item types.URLItem) {
 
 	parsedURL, _ := url.Parse(item.URL)
 	host := parsedURL.Host
+
+	// Per-host politeness: concurrency cap + Crawl-Delay spacing.
+	releaseHost, err := c.hosts.acquire(c.ctx, host, crawlDelay)
+	if err != nil {
+		result.Error = fmt.Sprintf("cancelled: %v", err)
+		c.saveResult(result)
+		c.errors.Add(1)
+		return
+	}
+	defer releaseHost()
 
 	for attempt := 0; attempt <= maxRetries; attempt++ {
 		if inBackoff, duration := c.retryHandler.IsInBackoff(host); inBackoff && attempt > 0 {
@@ -510,7 +529,12 @@ func (c *Crawler) makeRequest(urlStr string, p *persona.Persona) (*http.Response
 	} else if c.headerRotator != nil {
 		c.headerRotator.ApplyHeaders(req)
 	} else {
-		req.Header.Set("User-Agent", "GoGoGoBot/1.0 (+https://github.com/BenjaminSRussell/go_go_go)")
+		req.Header.Set("User-Agent", DefaultUserAgent)
+	}
+	// An explicitly configured UA always wins over rotation/personas so the
+	// identity matches the robots.txt group we evaluated.
+	if c.config.UserAgent != "" {
+		req.Header.Set("User-Agent", c.config.UserAgent)
 	}
 
 	return c.client.Do(req)
@@ -556,47 +580,72 @@ func (c *Crawler) shouldCrawl(link, baseURL string) bool {
 	return true
 }
 
-// isAllowedByRobots checks robots.txt
+// isAllowedByRobots reports whether robots.txt permits fetching urlStr.
 func (c *Crawler) isAllowedByRobots(urlStr string) bool {
+	allowed, _ := c.robotsPolicy(urlStr)
+	return allowed
+}
+
+// robotsPolicy returns whether urlStr may be fetched and the Crawl-Delay that
+// applies to our agent on that host. robots.txt is fetched once per origin and
+// cached, including "allow all" outcomes (404, network error) so it is not
+// refetched for every URL. 5xx is treated as disallow-all per RFC 9309.
+func (c *Crawler) robotsPolicy(urlStr string) (bool, time.Duration) {
 	parsedURL, err := url.Parse(urlStr)
 	if err != nil {
-		return false
+		return false, 0
 	}
 
 	robotsURL := fmt.Sprintf("%s://%s/robots.txt", parsedURL.Scheme, parsedURL.Host)
 
-	// Check robots.txt cache
+	var robots *robotstxt.RobotsData
 	if data, ok := c.robotsCache.Load(robotsURL); ok {
-		if robots, ok := data.(*robotstxt.RobotsData); ok {
-			return robots.TestAgent(parsedURL.Path, "GoGoGoBot")
-		}
+		robots, _ = data.(*robotstxt.RobotsData)
+	}
+	if robots == nil {
+		robots = c.fetchRobots(robotsURL)
+		c.robotsCache.Store(robotsURL, robots)
 	}
 
-	// Fetch and parse robots.txt
-	resp, err := c.client.Get(robotsURL)
+	group := robots.FindGroup(c.agentToken)
+	if group == nil {
+		return true, 0
+	}
+	path := parsedURL.EscapedPath()
+	if parsedURL.RawQuery != "" {
+		path += "?" + parsedURL.RawQuery
+	}
+	return group.Test(path), group.CrawlDelay
+}
+
+func (c *Crawler) fetchRobots(robotsURL string) *robotstxt.RobotsData {
+	allowAll, _ := robotstxt.FromStatusAndBytes(http.StatusNotFound, nil)
+
+	req, err := http.NewRequestWithContext(c.ctx, "GET", robotsURL, nil)
 	if err != nil {
-		// Allow if robots.txt doesn't exist
-		return true
+		return allowAll
+	}
+	ua := c.config.UserAgent
+	if ua == "" {
+		ua = DefaultUserAgent
+	}
+	req.Header.Set("User-Agent", ua)
+
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return allowAll
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode == http.StatusNotFound {
-		return true
-	}
-
-	body, err := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(io.LimitReader(resp.Body, 512*1024))
 	if err != nil {
-		return true
+		return allowAll
 	}
-
-	robots, err := robotstxt.FromBytes(body)
+	robots, err := robotstxt.FromStatusAndBytes(resp.StatusCode, body)
 	if err != nil {
-		return true
+		return allowAll
 	}
-
-	c.robotsCache.Store(robotsURL, robots)
-
-	return robots.TestAgent(parsedURL.Path, "GoGoGoBot")
+	return robots
 }
 
 // runSeeding runs seeding strategies

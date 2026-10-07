@@ -10,14 +10,16 @@ import (
 )
 
 var (
-	startURL        string
-	workers         int
-	timeout         int
-	dataDir         string
-	seedingStrategy string
-	ignoreRobots bool
-	maxDepth     int
-	maxPages     int64
+	startURL           string
+	workers            int
+	timeout            int
+	dataDir            string
+	seedingStrategy    string
+	ignoreRobots       bool
+	userAgent          string
+	perHostConcurrency int
+	maxDepth           int
+	maxPages           int64
 
 	// Advanced features
 	enableJSRendering bool
@@ -29,11 +31,11 @@ var (
 	maxRetries        int
 
 	// Persona & behavioral features
-	enablePersonas    bool
-	maxPersonas       int
-	personaLifetime   int
-	personaReuseLimit int
-	enableWeightedNav bool
+	enablePersonas     bool
+	maxPersonas        int
+	personaLifetime    int
+	personaReuseLimit  int
+	enableWeightedNav  bool
 	crawlExternalLinks bool
 	metricsAddr        string
 )
@@ -44,14 +46,16 @@ var crawlCmd = &cobra.Command{
 	Long:  `Start crawling from a given URL with specified options`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		config := types.Config{
-			StartURL:        startURL,
-			Workers:         workers,
-			Timeout:         time.Duration(timeout) * time.Second,
-			DataDir:         dataDir,
-			SeedingStrategy: seedingStrategy,
-			IgnoreRobots: ignoreRobots,
-			MaxDepth:     maxDepth,
-			MaxPages:     maxPages,
+			StartURL:           startURL,
+			Workers:            workers,
+			Timeout:            time.Duration(timeout) * time.Second,
+			DataDir:            dataDir,
+			SeedingStrategy:    seedingStrategy,
+			IgnoreRobots:       ignoreRobots,
+			UserAgent:          userAgent,
+			PerHostConcurrency: perHostConcurrency,
+			MaxDepth:           maxDepth,
+			MaxPages:           maxPages,
 
 			// Advanced features
 			EnableJSRendering: enableJSRendering,
@@ -63,11 +67,11 @@ var crawlCmd = &cobra.Command{
 			MaxRetries:        maxRetries,
 
 			// Persona & behavioral features
-			EnablePersonas:    enablePersonas,
-			MaxPersonas:       maxPersonas,
-			PersonaLifetime:   time.Duration(personaLifetime) * time.Minute,
-			PersonaReuseLimit: personaReuseLimit,
-			EnableWeightedNav: enableWeightedNav,
+			EnablePersonas:     enablePersonas,
+			MaxPersonas:        maxPersonas,
+			PersonaLifetime:    time.Duration(personaLifetime) * time.Minute,
+			PersonaReuseLimit:  personaReuseLimit,
+			EnableWeightedNav:  enableWeightedNav,
 			CrawlExternalLinks: crawlExternalLinks,
 			MetricsAddr:        metricsAddr,
 		}
@@ -98,6 +102,8 @@ func init() {
 	crawlCmd.Flags().StringVar(&dataDir, "data-dir", "./data", "Data storage directory")
 	crawlCmd.Flags().StringVar(&seedingStrategy, "seeding-strategy", "all", "Seeding strategy: none/sitemap/ct/commoncrawl/all")
 	crawlCmd.Flags().BoolVar(&ignoreRobots, "ignore-robots", false, "Ignore robots.txt")
+	crawlCmd.Flags().StringVar(&userAgent, "user-agent", "", "User-Agent to send and match against robots.txt (overrides header rotation/personas; default GoGoGoBot)")
+	crawlCmd.Flags().IntVar(&perHostConcurrency, "per-host-concurrency", 2, "Maximum simultaneous requests to a single host")
 	crawlCmd.Flags().IntVar(&maxDepth, "max-depth", 5, "Maximum link depth from start URL (0 = start URL only)")
 	crawlCmd.Flags().Int64Var(&maxPages, "max-pages", 0, "Maximum pages to process (0 = unlimited)")
 
