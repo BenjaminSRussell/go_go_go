@@ -22,7 +22,7 @@ func TestShouldRender(t *testing.T) {
 	staticContent := "<html><body>" + strings.Repeat("Static content with lots of text ", 30) + "</body></html>"
 	scriptContent := "<html><script>console.log('test')</script></html>"
 	reactContent := "<html><div data-reactroot></div></html>"
-	
+
 	tests := []struct {
 		html         string
 		shouldRender bool

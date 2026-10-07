@@ -161,6 +161,18 @@ TLS profile, headers, and User-Agent always match (e.g., Chrome TLS = Chrome hea
 
 **Performance**: Only renders pages that need it (~5-10% of pages).
 
+**Operations notes** (`internal/renderer`):
+
+| Flag | Default | Effect |
+|------|---------|--------|
+| `--js-max-tabs` | 4 | Hard cap on concurrent Chrome tabs; extra renders wait (up to the page timeout) for a slot |
+| `--js-idle-timeout` | 60s | Chrome is shut down after this long with no renders and relaunched on demand, so long HTTP-only stretches don't hold Chrome memory |
+| `--chrome-flag` | — | Extra Chrome switches, repeatable (`--chrome-flag=window-size=1280,800`) |
+
+Chrome always runs headless with `--no-sandbox --disable-dev-shm-usage --disable-gpu`.
+Each tab uses roughly 100–300 MB; size `--js-max-tabs` to available RAM. Render,
+failure, launch and idle-shutdown counts are printed when the crawl closes.
+
 ### 4. SQLite Storage
 
 **Problem**: JSONL is write-only, can't query data.

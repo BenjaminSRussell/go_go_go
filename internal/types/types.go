@@ -19,6 +19,9 @@ type Config struct {
 
 	// Advanced features
 	EnableJSRendering bool
+	JSMaxTabs         int           // concurrent Chrome tabs (0 = default 4)
+	JSIdleTimeout     time.Duration // shut Chrome down after idle (0 = default 60s)
+	ChromeFlags       []string      // extra Chrome switches, "name" or "name=value"
 	EnableSQLite      bool
 	UseHeaderRotation bool
 	MaxRetries        int
