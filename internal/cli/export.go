@@ -13,6 +13,8 @@ var (
 	includeLastmod    bool
 	includeChangefreq bool
 	defaultPriority   float64
+	sitemapBaseURL    string
+	maxURLsPerFile    int
 )
 
 var exportCmd = &cobra.Command{
@@ -26,6 +28,8 @@ var exportCmd = &cobra.Command{
 			IncludeLastmod:    includeLastmod,
 			IncludeChangefreq: includeChangefreq,
 			DefaultPriority:   defaultPriority,
+			BaseURL:           sitemapBaseURL,
+			MaxURLsPerFile:    maxURLsPerFile,
 		}
 
 		count, err := export.ExportSitemap(config)
@@ -44,4 +48,6 @@ func init() {
 	exportCmd.Flags().BoolVar(&includeLastmod, "include-lastmod", true, "Include lastmod in sitemap")
 	exportCmd.Flags().BoolVar(&includeChangefreq, "include-changefreq", true, "Include changefreq in sitemap")
 	exportCmd.Flags().Float64Var(&defaultPriority, "default-priority", 0.5, "Default priority value")
+	exportCmd.Flags().StringVar(&sitemapBaseURL, "base-url", "", "Public base URL for child sitemaps listed in a sitemap index")
+	exportCmd.Flags().IntVar(&maxURLsPerFile, "max-urls-per-file", export.MaxSitemapURLs, "Split into a sitemap index when exceeding this many URLs (max 50000)")
 }
