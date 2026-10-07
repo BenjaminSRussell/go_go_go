@@ -385,3 +385,8 @@ This tool is provided for educational and authorized testing purposes only. The 
 ## Resume & bloom dedupe
 
 On crawl completion the frontier writes `data/seen.bloom`. `resume` loads it (soft-fail + rebuild log if corrupt) so previously seen URLs are not re-enqueued.
+
+## Prometheus metrics
+
+Pass `--metrics-addr :9090` to expose `/metrics` during a crawl (off by default). Series: `gogogo_pages_fetched_total`, `gogogo_http_responses_total{class=}`, `gogogo_retries_total`, `gogogo_frontier_size`, `gogogo_active_workers`.
+

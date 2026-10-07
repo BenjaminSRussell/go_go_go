@@ -30,6 +30,9 @@ type Config struct {
 	PersonaReuseLimit int
 	EnableWeightedNav bool
 	CrawlExternalLinks bool
+
+	// MetricsAddr if non-empty (e.g. ":9090") serves Prometheus text at /metrics
+	MetricsAddr string
 }
 
 // Results contains crawl statistics

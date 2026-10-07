@@ -27,6 +27,7 @@ import (
 type Crawler struct {
 	config   types.Config
 	frontier *Frontier
+	metrics  *scrapeMetrics
 	storage  *storage.Storage
 	client   *http.Client
 
@@ -78,6 +79,7 @@ func New(config types.Config) (*Crawler, error) {
 	c := &Crawler{
 		config:            config,
 		frontier:          NewFrontier(),
+		metrics:           &scrapeMetrics{},
 		storage:           store,
 		client:            &http.Client{
 			Timeout: config.Timeout,
@@ -230,6 +232,7 @@ func (c *Crawler) Crawl() (*types.Results, error) {
 	fmt.Printf("Starting crawl with %d workers\n", c.config.Workers)
 	fmt.Printf("Initial frontier size: %d URLs\n", c.frontier.Size())
 	c.printFeatureStatus()
+	c.startMetricsServer()
 
 	safeProcessor := NewSafeProcessor(c)
 
@@ -272,6 +275,9 @@ func (c *Crawler) Crawl() (*types.Results, error) {
 		c.sem <- struct{}{}
 		c.wg.Add(1)
 		c.inFlight.Add(1)
+		if c.metrics != nil {
+			c.metrics.activeWorkers.Store(int64(c.inFlight.Load()))
+		}
 
 		go safeProcessor.ProcessURLSafely(item)
 	}
@@ -480,6 +486,10 @@ func (c *Crawler) processURL(item types.URLItem) {
 	c.saveResult(result)
 	c.frontier.MarkProcessed()
 	c.processed.Add(1)
+	if c.metrics != nil {
+		c.metrics.pagesFetched.Add(1)
+		c.metrics.observeStatus(result.StatusCode)
+	}
 }
 
 // makeRequest creates and executes HTTP request
