@@ -18,9 +18,11 @@ jobs:
           go-version-file: go.mod
           cache: true
       - name: Build
-        run: mkdir -p bin && go build -o bin/gogogoscraper ./cmd/gogogoscraper
+        run: mkdir -p bin && go build -tags sqlite_fts5 -o bin/gogogoscraper ./cmd/gogogoscraper
       - name: Test
         run: go test ./...
+      - name: Test storage with FTS5
+        run: go test -tags sqlite_fts5 ./internal/storage/
 
   race:
     runs-on: ubuntu-latest
