@@ -46,3 +46,21 @@ func TestShouldCrawlHostScope(t *testing.T) {
 		}
 	}
 }
+
+func TestFrontierExhaustedRequiresZeroInFlight(t *testing.T) {
+	// Documents the Crawl() exit condition: empty frontier alone is not enough
+	// while workers may still discover links.
+	c := &Crawler{}
+	c.frontier = NewFrontier()
+	if !(c.frontier.IsEmpty() && c.inFlight.Load() == 0) {
+		t.Fatal("expected exhausted with zero in-flight")
+	}
+	c.inFlight.Store(1)
+	if c.frontier.IsEmpty() && c.inFlight.Load() == 0 {
+		t.Fatal("must not treat as exhausted while work is in flight")
+	}
+	c.inFlight.Store(0)
+	if !(c.frontier.IsEmpty() && c.inFlight.Load() == 0) {
+		t.Fatal("expected exhausted after in-flight drained")
+	}
+}
