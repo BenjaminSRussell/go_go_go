@@ -1,0 +1,25 @@
+# Binaries
+/bin/
+/gogogoscraper
+*.exe
+*.test
+*.out
+
+# macOS
+.DS_Store
+
+# Crawl / local data dumps
+/data/
+/test_crawl/
+/test_crawl2/
+/test_crawl3/
+/test_umass/
+test_crawl*/
+*.db
+*.sqlite
+*.sqlite3
+
+# IDE / env
+.idea/
+.vscode/
+.env

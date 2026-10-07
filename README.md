@@ -32,23 +32,25 @@ A high-performance web crawler written in Go with advanced anti-bot evasion capa
 git clone https://github.com/BenjaminSRussell/go_go_go.git
 cd go_go_go
 
-# Build
-go build -o gogogoscraper ./cmd/gogogoscraper
+# Build (binary lands in bin/, which is gitignored)
+mkdir -p bin && go build -o bin/gogogoscraper ./cmd/gogogoscraper
 ```
+
+Crawl dumps (`data/`, `test_crawl*`) and the compiled binary are gitignored — do not commit them.
 
 ## Usage
 
 ### Basic Crawl
 
 ```bash
-./gogogoscraper crawl --start-url https://example.com
+./bin/gogogoscraper crawl --start-url https://example.com
 ```
 
 ### Advanced Crawl with Enhanced Features
 
 ```bash
 # Enable all advanced features
-./gogogoscraper crawl \
+./bin/gogogoscraper crawl \
   --start-url https://example.com \
   --workers 64 \
   --timeout 15 \
@@ -63,7 +65,7 @@ go build -o gogogoscraper ./cmd/gogogoscraper
 
 ```bash
 # Conservative settings that respect rate limits
-./gogogoscraper crawl \
+./bin/gogogoscraper crawl \
   --start-url https://example.com \
   --workers 32 \
   --timeout 30 \
@@ -75,7 +77,7 @@ go build -o gogogoscraper ./cmd/gogogoscraper
 
 ```bash
 # Use SQLite for queryable data
-./gogogoscraper crawl \
+./bin/gogogoscraper crawl \
   --start-url https://example.com \
   --enable-sqlite \
   --enable-js-rendering \
@@ -232,7 +234,7 @@ sqlite3 ./data/crawl.db "SELECT * FROM pages WHERE status_code = 200 LIMIT 10"
 ### XML Sitemap
 
 ```bash
-./gogogoscraper export-sitemap --data-dir ./data --output sitemap.xml
+./bin/gogogoscraper export-sitemap --data-dir ./data --output sitemap.xml
 ```
 
 ## Performance & Recommendations
@@ -250,7 +252,7 @@ Typical: 50-200 URLs/minute (depends on page size)
 
 ```bash
 # Fast focused crawl (respects servers)
-./gogogoscraper crawl \
+./bin/gogogoscraper crawl \
   --start-url https://example.com \
   --workers 64 \
   --timeout 10 \
@@ -258,7 +260,7 @@ Typical: 50-200 URLs/minute (depends on page size)
   --max-retries 2
 
 # Maximum features (for authorized testing)
-./gogogoscraper crawl \
+./bin/gogogoscraper crawl \
   --start-url https://example.com \
   --workers 32 \
   --enable-tls-fingerprint \
@@ -268,7 +270,7 @@ Typical: 50-200 URLs/minute (depends on page size)
   --max-retries 5
 
 # Data extraction (queryable results)
-./gogogoscraper crawl \
+./bin/gogogoscraper crawl \
   --start-url https://example.com \
   --enable-sqlite \
   --enable-js-rendering \
@@ -353,7 +355,7 @@ This tool includes powerful anti-bot features. Use responsibly:
 
 ```bash
 # Build
-go build -o gogogoscraper ./cmd/gogogoscraper
+mkdir -p bin && go build -o bin/gogogoscraper ./cmd/gogogoscraper
 
 # Test
 go test ./...
