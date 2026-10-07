@@ -41,6 +41,7 @@ type Crawler struct {
 	ctx      context.Context
 	cancel   context.CancelFunc
 	shutdown atomic.Bool
+	inFlight atomic.Int64
 
 	// Advanced components (optional)
 	personaPool    *persona.PersonaPool
@@ -222,22 +223,30 @@ func (c *Crawler) Crawl() (*types.Results, error) {
 	go c.reportProgress(ticker)
 
 	for !c.shutdown.Load() {
-		if c.frontier.IsEmpty() {
-			time.Sleep(1 * time.Second)
-			if c.frontier.IsEmpty() {
+		// Only finish when the queue is empty AND no workers are still
+		// fetching (they may still discover links that must be crawled).
+		if c.frontier.IsEmpty() && c.inFlight.Load() == 0 {
+			time.Sleep(200 * time.Millisecond)
+			if c.frontier.IsEmpty() && c.inFlight.Load() == 0 {
 				fmt.Println("\nFrontier exhausted, finishing...")
 				break
 			}
+			continue
+		}
+		if c.frontier.IsEmpty() {
+			time.Sleep(50 * time.Millisecond)
+			continue
 		}
 
 		item, ok := c.frontier.Next()
 		if !ok {
-			time.Sleep(100 * time.Millisecond)
+			time.Sleep(50 * time.Millisecond)
 			continue
 		}
 
 		c.sem <- struct{}{}
 		c.wg.Add(1)
+		c.inFlight.Add(1)
 
 		go safeProcessor.ProcessURLSafely(item)
 	}
@@ -263,6 +272,7 @@ func (c *Crawler) Crawl() (*types.Results, error) {
 // processURL processes a single URL
 func (c *Crawler) processURL(item types.URLItem) {
 	defer c.wg.Done()
+	defer c.inFlight.Add(-1)
 	defer func() { <-c.sem }()
 
 	result := types.PageResult{
