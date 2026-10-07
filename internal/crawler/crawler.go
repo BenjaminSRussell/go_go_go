@@ -248,6 +248,15 @@ func (c *Crawler) Crawl() (*types.Results, error) {
 			continue
 		}
 
+		// Stop dispatching once MaxPages budget is exhausted (0 = unlimited).
+		if c.config.MaxPages > 0 {
+			done := c.processed.Load() + c.errors.Load()
+			if done >= c.config.MaxPages {
+				fmt.Printf("\nMax pages limit reached (%d), finishing...\n", c.config.MaxPages)
+				break
+			}
+		}
+
 		item, ok := c.frontier.Next()
 		if !ok {
 			time.Sleep(50 * time.Millisecond)
@@ -441,10 +450,14 @@ func (c *Crawler) processURL(item types.URLItem) {
 	result.LinkCount = len(links)
 
 	for _, link := range links {
+		nextDepth := item.Depth + 1
+		if nextDepth > c.config.MaxDepth {
+			continue
+		}
 		if c.shouldCrawl(link, item.URL) {
 			c.frontier.Add(types.URLItem{
 				URL:       link,
-				Depth:     item.Depth + 1,
+				Depth:     nextDepth,
 				ParentURL: item.URL,
 			})
 			c.discovered.Add(1)
@@ -660,7 +673,11 @@ func (c *Crawler) printFinalStats(results *types.Results) {
 	fmt.Printf("Total errors:     %d\n", results.Errors)
 
 	if results.Processed > 0 {
-		successRate := float64(results.Processed-results.Errors) / float64(results.Processed) * 100
+		total := results.Processed + results.Errors
+		successRate := 0.0
+		if total > 0 {
+			successRate = float64(results.Processed) / float64(total) * 100
+		}
 		fmt.Printf("Success rate:     %.1f%%\n", successRate)
 	}
 

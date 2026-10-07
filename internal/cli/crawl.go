@@ -15,12 +15,11 @@ var (
 	timeout         int
 	dataDir         string
 	seedingStrategy string
-	ignoreRobots    bool
-	enableRedis     bool
-	redisURL        string
+	ignoreRobots bool
+	maxDepth     int
+	maxPages     int64
 
 	// Advanced features
-	enableTLS         bool
 	enableJSRendering bool
 	enableSQLite      bool
 	useHeaderRotation bool
@@ -46,12 +45,11 @@ var crawlCmd = &cobra.Command{
 			Timeout:         time.Duration(timeout) * time.Second,
 			DataDir:         dataDir,
 			SeedingStrategy: seedingStrategy,
-			IgnoreRobots:    ignoreRobots,
-			EnableRedis:     enableRedis,
-			RedisURL:        redisURL,
+			IgnoreRobots: ignoreRobots,
+			MaxDepth:     maxDepth,
+			MaxPages:     maxPages,
 
 			// Advanced features
-			EnableTLS:         enableTLS,
 			EnableJSRendering: enableJSRendering,
 			EnableSQLite:      enableSQLite,
 			UseHeaderRotation: useHeaderRotation,
@@ -92,11 +90,10 @@ func init() {
 	crawlCmd.Flags().StringVar(&dataDir, "data-dir", "./data", "Data storage directory")
 	crawlCmd.Flags().StringVar(&seedingStrategy, "seeding-strategy", "all", "Seeding strategy: none/sitemap/ct/commoncrawl/all")
 	crawlCmd.Flags().BoolVar(&ignoreRobots, "ignore-robots", false, "Ignore robots.txt")
-	crawlCmd.Flags().BoolVar(&enableRedis, "enable-redis", false, "Enable distributed crawling with Redis")
-	crawlCmd.Flags().StringVar(&redisURL, "redis-url", "", "Redis connection URL")
+	crawlCmd.Flags().IntVar(&maxDepth, "max-depth", 5, "Maximum link depth from start URL (0 = start URL only)")
+	crawlCmd.Flags().Int64Var(&maxPages, "max-pages", 0, "Maximum pages to process (0 = unlimited)")
 
 	// Advanced features
-	crawlCmd.Flags().BoolVar(&enableTLS, "enable-tls-fingerprint", false, "Enable TLS fingerprinting to mimic real browsers")
 	crawlCmd.Flags().BoolVar(&enableJSRendering, "enable-js-rendering", false, "Enable JavaScript rendering with headless Chrome")
 	crawlCmd.Flags().BoolVar(&enableSQLite, "enable-sqlite", false, "Use SQLite for queryable storage instead of JSONL")
 	crawlCmd.Flags().BoolVar(&useHeaderRotation, "use-header-rotation", true, "Rotate browser headers")

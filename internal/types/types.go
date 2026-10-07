@@ -12,11 +12,12 @@ type Config struct {
 	DataDir         string
 	SeedingStrategy string
 	IgnoreRobots    bool
-	EnableRedis     bool
-	RedisURL        string
+
+	// Crawl bounds (MaxDepth default 5; MaxPages 0 = unlimited)
+	MaxDepth int
+	MaxPages int64
 
 	// Advanced features
-	EnableTLS         bool
 	EnableJSRendering bool
 	EnableSQLite      bool
 	UseHeaderRotation bool
